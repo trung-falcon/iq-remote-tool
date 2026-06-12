@@ -1,14 +1,20 @@
-import { Tag } from 'antd';
+import {
+  CloudDownloadOutlined,
+  CrownOutlined,
+  FilterOutlined,
+  MinusCircleOutlined,
+  PlayCircleOutlined,
+  PlusCircleOutlined,
+} from '@ant-design/icons';
+import { Button, Space, Typography } from 'antd';
 import { type Trigger } from '../../../../shared/trigger-meta';
 
-const { CheckableTag } = Tag;
-
 export const TRIGGER_FACETS = [
-  { key: 'showAd', label: 'Show ads' },
-  { key: 'paywall', label: 'Paywall' },
-  { key: 'enableAd', label: 'Enable ad' },
-  { key: 'disableAd', label: 'Disable ad' },
-  { key: 'superwallPreload', label: 'Preload' },
+  { key: 'showAd', label: 'Show ads', icon: <PlayCircleOutlined /> },
+  { key: 'paywall', label: 'Paywall', icon: <CrownOutlined /> },
+  { key: 'enableAd', label: 'Enable ad', icon: <PlusCircleOutlined /> },
+  { key: 'disableAd', label: 'Disable ad', icon: <MinusCircleOutlined /> },
+  { key: 'superwallPreload', label: 'Preload', icon: <CloudDownloadOutlined /> },
 ] as const;
 
 // Which features a trigger configures — drives the list facet filter.
@@ -22,7 +28,7 @@ export function computeFacets(t: Trigger): string[] {
   return f;
 }
 
-// Checkable facet chips; a trigger must match ALL checked facets (AND).
+// Toggle-button facets (filled = active). A trigger must match ALL active ones (AND).
 export function TriggerFilterBar({
   value,
   onChange,
@@ -31,16 +37,29 @@ export function TriggerFilterBar({
   onChange: (next: string[]) => void;
 }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-      {TRIGGER_FACETS.map(f => (
-        <CheckableTag
-          key={f.key}
-          checked={value.includes(f.key)}
-          onChange={c => onChange(c ? [...value, f.key] : value.filter(k => k !== f.key))}
-        >
-          {f.label}
-        </CheckableTag>
-      ))}
-    </div>
+    <Space size={[4, 4]} wrap style={{ marginBottom: 10 }}>
+      <Typography.Text type="secondary" style={{ fontSize: 12, marginRight: 2 }}>
+        <FilterOutlined /> Lọc:
+      </Typography.Text>
+      {TRIGGER_FACETS.map(f => {
+        const active = value.includes(f.key);
+        return (
+          <Button
+            key={f.key}
+            size="small"
+            icon={f.icon}
+            type={active ? 'primary' : 'default'}
+            onClick={() => onChange(active ? value.filter(k => k !== f.key) : [...value, f.key])}
+          >
+            {f.label}
+          </Button>
+        );
+      })}
+      {value.length > 0 && (
+        <Button size="small" type="link" onClick={() => onChange([])}>
+          Xóa lọc
+        </Button>
+      )}
+    </Space>
   );
 }

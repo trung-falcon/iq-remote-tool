@@ -85,7 +85,11 @@ export function TriggersPage({ triggers, adsWf, etag, reload }: Props) {
   return (
     <Row gutter={16}>
       <Col xs={24} lg={7}>
-        <Card size="small" title={`Triggers (${tg.keys.length})`} styles={{ body: { padding: 8 } }}>
+        <Card
+          size="small"
+          title={`Triggers (${shown.length === tg.keys.length ? tg.keys.length : `${shown.length}/${tg.keys.length}`})`}
+          styles={{ body: { padding: 8 } }}
+        >
           <Space.Compact style={{ width: '100%', marginBottom: 8 }}>
             <AutoComplete
               style={{ width: '100%' }}
