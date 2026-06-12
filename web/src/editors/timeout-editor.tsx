@@ -1,3 +1,4 @@
+import { ClockCircleOutlined } from '@ant-design/icons';
 import { Alert, Card, InputNumber, Typography } from 'antd';
 import { PARAM_KEYS } from '../../../shared/params';
 import type { ParamSummary } from '../api';
@@ -14,7 +15,12 @@ type Props = {
 export function TimeoutEditor({ value, summary, dirty, error, onChange }: Props) {
   return (
     <Card
-      title="⏱ Thời gian hiện nút thoát"
+      title={
+        <span>
+          <ClockCircleOutlined style={{ color: '#3b82f6', marginRight: 8 }} />
+          Thời gian hiện nút thoát
+        </span>
+      }
       extra={<ParamTags summary={summary} dirty={dirty} />}
     >
       <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>

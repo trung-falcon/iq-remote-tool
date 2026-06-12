@@ -1,13 +1,20 @@
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { Alert, Button, Card, Input, Popconfirm, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
-import { LAYOUTS, PARAM_KEYS } from '../../../shared/params';
+import { isCanonicalLayout, LAYOUTS, PARAM_KEYS } from '../../../shared/params';
 import type { LayoutWeights } from '../../../shared/schemas';
 import type { ParamSummary } from '../api';
 import { ParamTags } from '../components/param-tags';
 import { WeightRows } from './weight-rows';
 
 const NAME_PATTERN = /^[a-z0-9_]+$/;
+const LAYOUT_WARN = 'Native không nhận tên layout này → sẽ fallback về media_full. Nên đổi sang media_full.';
+
+// Canonical layouts first (fixed order), then any extra/non-canonical keys present.
+const layoutOrder = (map: Record<string, number>): string[] => [
+  ...LAYOUTS,
+  ...Object.keys(map).filter(k => !isCanonicalLayout(k)),
+];
 
 type Props = {
   value: LayoutWeights;
@@ -65,9 +72,20 @@ function EventNameInput({
 
 export function LayoutWeightsEditor({ value, summary, dirty, error, onChange }: Props) {
   const events = Object.keys(value);
+  const unknownNames = [
+    ...new Set(
+      events.flatMap(e => Object.keys(value[e])).filter(k => !isCanonicalLayout(k)),
+    ),
+  ];
 
   const setWeight = (event: string, layout: string, weight: number) =>
     onChange({ ...value, [event]: { ...value[event], [layout]: weight } });
+
+  const removeLayout = (event: string, layout: string) => {
+    const map = { ...value[event] };
+    delete map[layout];
+    onChange({ ...value, [event]: map });
+  };
 
   const rename = (oldName: string, newName: string) => {
     const next: LayoutWeights = {};
@@ -89,12 +107,30 @@ export function LayoutWeightsEditor({ value, summary, dirty, error, onChange }: 
   };
 
   return (
-    <Card title="🎨 Trọng số chọn layout" extra={<ParamTags summary={summary} dirty={dirty} />}>
+    <Card
+      title={
+        <span>
+          <AppstoreOutlined style={{ color: '#3b82f6', marginRight: 8 }} />
+          Trọng số chọn layout
+        </span>
+      }
+      extra={<ParamTags summary={summary} dirty={dirty} />}
+    >
       <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
         Key: <Typography.Text code>{PARAM_KEYS.layoutWeights}</Typography.Text> — app chọn layout
         random theo trọng số. <Typography.Text strong>default</Typography.Text> áp dụng cho mọi
         event, có thể override riêng cho từng trigger event.
       </Typography.Paragraph>
+
+      {unknownNames.length > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 12 }}
+          message={`Tên layout không chuẩn: ${unknownNames.join(', ')}`}
+          description={LAYOUT_WARN}
+        />
+      )}
 
       {events.map(event => (
         <Card
@@ -123,7 +159,10 @@ export function LayoutWeightsEditor({ value, summary, dirty, error, onChange }: 
         >
           <WeightRows
             weights={value[event]}
-            order={LAYOUTS}
+            order={layoutOrder(value[event])}
+            warnKeys={new Set(Object.keys(value[event]).filter(k => !isCanonicalLayout(k)))}
+            warnTooltip={LAYOUT_WARN}
+            onRemoveKey={layout => removeLayout(event, layout)}
             onChange={(layout, w) => setWeight(event, layout, w)}
           />
         </Card>

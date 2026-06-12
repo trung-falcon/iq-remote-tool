@@ -1,61 +1,85 @@
 import { z } from 'zod';
-import { LAYOUTS, PARAM_KEYS, type ParamKey } from './params';
+import { PARAM_KEYS, type ParamKey } from './params';
 
-const weight = z.number().min(0, 'Weight must be >= 0');
+const weight = z.number().min(0, 'Trọng số phải >= 0');
 
-// All objects are .strict(): unknown fields fail parsing (→ UI falls back to
-// defaults with a visible warning) instead of being silently dropped on publish.
+// Weighted-random close-button corner. Corners optional (missing = 0); all-zero
+// is valid — native falls back to TR. Unknown keys preserved via passthrough.
+const cornerWeightsSchema = z
+  .object({ TR: weight, TL: weight, BR: weight, BL: weight })
+  .partial()
+  .passthrough();
+
+// Preservation-first: every object is .passthrough() so fields the app/native
+// read but this tool doesn't model (e.g. preClose.mode) survive an edit+publish
+// instead of being silently dropped. Only the modeled fields are validated.
 export const closeConfigSchema = z
   .object({
     enabled: z.boolean(),
     preClose: z
       .object({
-        delaySeconds: z.number().min(0, 'Delay must be >= 0'),
+        delaySeconds: weight,
         modeWeights: z
           .object({ fakeX: weight, openStore: weight, countdown: weight })
-          .strict(),
+          .partial()
+          .passthrough()
+          .optional(),
+        positionWeights: cornerWeightsSchema.optional(),
       })
-      .strict(),
-    close: z.object({ delaySeconds: z.number().min(0, 'Delay must be >= 0') }).strict(),
+      .passthrough(),
+    close: z
+      .object({
+        delaySeconds: weight,
+        positionWeights: cornerWeightsSchema.optional(),
+      })
+      .passthrough(),
   })
-  .strict()
+  .passthrough()
   .superRefine((cfg, ctx) => {
-    const { fakeX, openStore, countdown } = cfg.preClose.modeWeights;
-    if (cfg.enabled && fakeX + openStore + countdown <= 0) {
+    const mw = cfg.preClose.modeWeights;
+    const sum = mw ? (mw.fakeX ?? 0) + (mw.openStore ?? 0) + (mw.countdown ?? 0) : 0;
+    if (cfg.enabled && mw && sum <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['preClose', 'modeWeights'],
-        message: 'At least one mode weight must be > 0 when enabled',
+        message: 'Cần ít nhất một mode pre-close có trọng số > 0',
       });
     }
   });
 
-export type CloseConfig = z.infer<typeof closeConfigSchema>;
+// Hand-written editor shapes — normalizeCloseConfig (use-template.ts) always
+// materializes modeWeights + positionWeights so editors can assume them present.
+export type ModeWeights = { fakeX: number; openStore: number; countdown: number };
+export type CornerWeights = { TR: number; TL: number; BR: number; BL: number };
+export type CloseConfig = {
+  enabled: boolean;
+  preClose: { delaySeconds: number; modeWeights: ModeWeights; positionWeights: CornerWeights };
+  close: { delaySeconds: number; positionWeights: CornerWeights };
+};
 
+// Accept ANY layout name — native silently falls back to media_full for names
+// it doesn't recognize, so non-canonical names are valid config (editor warns).
 const layoutMapSchema = z
   .record(z.string(), weight)
-  .superRefine((map, ctx) => {
-    for (const key of Object.keys(map)) {
-      if (!(LAYOUTS as readonly string[]).includes(key)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `Unknown layout "${key}" — allowed: ${LAYOUTS.join(', ')}`,
-        });
-      }
-    }
-  })
-  .refine(
-    map => Object.values(map).some(w => w > 0),
-    'At least one layout weight must be > 0',
-  );
+  .refine(m => Object.values(m).some(w => w > 0), 'Cần ít nhất một layout có trọng số > 0');
 
 export const layoutWeightsSchema = z
-  .record(z.string().min(1, 'Event name must not be empty'), layoutMapSchema)
-  .refine(map => 'default' in map, '"default" entry is required');
+  .record(z.string().min(1, 'Tên event không được rỗng'), layoutMapSchema)
+  .refine(m => 'default' in m, 'Bắt buộc có entry "default"');
 
 export type LayoutWeights = z.infer<typeof layoutWeightsSchema>;
 
-export const timeoutSchema = z.number().min(0, 'Timeout must be >= 0');
+export const timeoutSchema = z.number().min(0, 'Timeout phải >= 0');
+
+// Concise human-readable rendering of a parse/validation failure.
+export function describeError(e: unknown): string {
+  if (e instanceof z.ZodError) {
+    return e.issues
+      .map(i => (i.path.length ? `${i.path.join('.')}: ` : '') + i.message)
+      .join('; ');
+  }
+  return e instanceof SyntaxError ? `JSON lỗi cú pháp: ${e.message}` : String(e);
+}
 
 // Validate the raw Remote Config string value of a given param key.
 // Returns null when valid, otherwise a human-readable error message.
@@ -63,7 +87,7 @@ export function validateRawValue(key: ParamKey, raw: string): string | null {
   try {
     if (key === PARAM_KEYS.timeout) {
       const n = Number(raw);
-      if (raw.trim() === '' || Number.isNaN(n)) return 'Timeout must be a number';
+      if (raw.trim() === '' || Number.isNaN(n)) return 'Timeout phải là một số';
       timeoutSchema.parse(n);
       return null;
     }
@@ -72,9 +96,6 @@ export function validateRawValue(key: ParamKey, raw: string): string | null {
     if (key === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
     return null;
   } catch (e) {
-    if (e instanceof z.ZodError) {
-      return e.issues.map(i => (i.path.length ? `${i.path.join('.')}: ` : '') + i.message).join('; ');
-    }
-    return e instanceof SyntaxError ? `Invalid JSON: ${e.message}` : String(e);
+    return describeError(e);
   }
 }

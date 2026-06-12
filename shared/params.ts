@@ -25,6 +25,9 @@ export const LAYOUTS = [
 
 export type LayoutName = (typeof LAYOUTS)[number];
 
+export const isCanonicalLayout = (name: string): boolean =>
+  (LAYOUTS as readonly string[]).includes(name);
+
 // Human labels for the pre-close modes (close_config.preClose.modeWeights).
 export const CLOSE_MODE_LABELS: Record<string, string> = {
   fakeX: 'Fake X button',
@@ -32,17 +35,32 @@ export const CLOSE_MODE_LABELS: Record<string, string> = {
   countdown: 'Countdown timer',
 };
 
+// Close-button corner positions — weighted-random pick (native side).
+// TR/TL/BR/BL = Top/Bottom × Right/Left. All-zero ≡ absent → native defaults TR.
+export const CORNERS = ['TR', 'TL', 'BR', 'BL'] as const;
+export const CORNER_LABELS: Record<string, string> = {
+  TR: 'Trên · Phải (TR)',
+  TL: 'Trên · Trái (TL)',
+  BR: 'Dưới · Phải (BR)',
+  BL: 'Dưới · Trái (BL)',
+};
+
+export const DEFAULT_MODE_WEIGHTS = { fakeX: 0, openStore: 0, countdown: 100 };
+
 // App-side defaults — used to initialize drafts when a param is missing from the
-// template or its current value fails to parse. Mirrors remoteConfig.ts defaults.
+// template or its current value fails to parse. Mirrors the real config shape
+// (close_config carries preClose.mode + positionWeights, close.positionWeights).
 export const APP_DEFAULTS = {
   timeout: 5,
   closeConfig: {
     enabled: true,
     preClose: {
       delaySeconds: 2,
+      mode: 'countdown',
       modeWeights: { fakeX: 0, openStore: 0, countdown: 100 },
+      positionWeights: { TR: 50, TL: 50, BR: 0, BL: 0 },
     },
-    close: { delaySeconds: 3 },
+    close: { delaySeconds: 3, positionWeights: { TR: 50, TL: 50, BR: 0, BL: 0 } },
   },
   layoutWeights: {
     default: {

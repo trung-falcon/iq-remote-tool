@@ -1,4 +1,10 @@
-import { CloudUploadOutlined, HistoryOutlined, ReloadOutlined } from '@ant-design/icons';
+import {
+  CloudUploadOutlined,
+  CodeOutlined,
+  ControlOutlined,
+  HistoryOutlined,
+  ReloadOutlined,
+} from '@ant-design/icons';
 import { Alert, App, Badge, Button, Col, Result, Row, Space, Spin, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { PARAM_KEYS } from '../../shared/params';
@@ -102,29 +108,47 @@ export default function RemoteConfigApp() {
   }));
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 16px 48px' }}>
-      <div
+    <div style={{ maxWidth: 1320, margin: '0 auto', padding: '0 20px 56px' }}>
+      <header
         style={{
-          position: 'sticky', top: 0, zIndex: 10, background: '#fff',
+          position: 'sticky', top: 0, zIndex: 20,
+          background: 'rgba(10,13,20,0.72)',
+          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '12px 16px', margin: '0 -16px 16px',
-          borderBottom: '1px solid #f0f0f0',
+          gap: 16, flexWrap: 'wrap',
+          padding: '14px 20px', margin: '0 -20px 24px',
+          borderBottom: '1px solid #1e2536',
         }}
       >
-        <div>
-          <Typography.Title level={4} style={{ margin: 0 }}>
-            🧠 Remote Config — Native Fullscreen Ad
-          </Typography.Title>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-            flab---brain-training
-            {t.version?.versionNumber && (
-              <Tag style={{ marginLeft: 8 }}>
-                v{t.version.versionNumber}
-                {t.version.updateTime &&
-                  ` • ${new Date(t.version.updateTime).toLocaleString('vi-VN')}`}
-              </Tag>
-            )}
-          </Typography.Text>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div
+            style={{
+              width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+              display: 'grid', placeItems: 'center',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #22c55e 100%)',
+              boxShadow: '0 6px 18px rgba(59,130,246,0.35)',
+            }}
+          >
+            <ControlOutlined style={{ fontSize: 21, color: '#fff' }} />
+          </div>
+          <div>
+            <Typography.Title level={4} style={{ margin: 0, lineHeight: 1.25 }}>
+              Remote Config{' '}
+              <Typography.Text style={{ color: '#64748b', fontWeight: 500, fontSize: 16 }}>
+                · Native Fullscreen Ad
+              </Typography.Text>
+            </Typography.Title>
+            <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              <code style={{ color: '#94a3b8' }}>flab---brain-training</code>
+              {t.version?.versionNumber && (
+                <Tag color="blue" bordered={false} style={{ marginLeft: 8 }}>
+                  v{t.version.versionNumber}
+                  {t.version.updateTime &&
+                    ` • ${new Date(t.version.updateTime).toLocaleString('vi-VN')}`}
+                </Tag>
+              )}
+            </Typography.Text>
+          </div>
         </div>
         <Space>
           <Button icon={<ReloadOutlined />} onClick={safeReload} loading={t.loading}>
@@ -145,7 +169,7 @@ export default function RemoteConfigApp() {
             </Button>
           </Badge>
         </Space>
-      </div>
+      </header>
 
       {t.warnings.map(w => (
         <Alert key={w} type="warning" showIcon closable message={w} style={{ marginBottom: 12 }} />
@@ -186,7 +210,16 @@ export default function RemoteConfigApp() {
           </Space>
         </Col>
         <Col xs={24} lg={10}>
-          <Typography.Title level={5}>JSON preview (sẽ publish)</Typography.Title>
+          <Typography.Title
+            level={5}
+            style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}
+          >
+            <CodeOutlined style={{ color: '#3b82f6' }} />
+            JSON preview
+            <Typography.Text type="secondary" style={{ fontSize: 12, fontWeight: 400 }}>
+              (sẽ publish)
+            </Typography.Text>
+          </Typography.Title>
           <JsonPreview
             title={PARAM_KEYS.timeout}
             value={t.drafts.timeout}

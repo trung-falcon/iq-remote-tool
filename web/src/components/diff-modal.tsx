@@ -9,14 +9,29 @@ export type DiffItem = {
 };
 
 const preBase: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: 12.5,
+  lineHeight: 1.6,
   whiteSpace: 'pre-wrap',
   wordBreak: 'break-all',
-  padding: 8,
-  borderRadius: 6,
-  maxHeight: 260,
+  padding: '10px 12px',
+  borderRadius: 8,
+  maxHeight: 280,
   overflow: 'auto',
-  margin: 0,
+  margin: '4px 0 0',
+};
+
+const oldStyle: React.CSSProperties = {
+  ...preBase,
+  background: 'rgba(239,68,68,0.10)',
+  border: '1px solid rgba(239,68,68,0.3)',
+  color: '#fca5a5',
+};
+
+const newStyle: React.CSSProperties = {
+  ...preBase,
+  background: 'rgba(34,197,94,0.10)',
+  border: '1px solid rgba(34,197,94,0.3)',
+  color: '#86efac',
 };
 
 type Props = {
@@ -51,7 +66,7 @@ export function DiffModal({ open, items, loading, onConfirm, onCancel }: Props) 
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                 Hiện tại trên Firebase
               </Typography.Text>
-              <pre style={{ ...preBase, background: '#fff1f0' }}>
+              <pre style={oldStyle}>
                 {item.exists ? prettyValue(item.oldRaw) : '(chưa tồn tại — sẽ được tạo mới)'}
               </pre>
             </Col>
@@ -59,7 +74,7 @@ export function DiffModal({ open, items, loading, onConfirm, onCancel }: Props) 
               <Typography.Text type="secondary" style={{ fontSize: 12 }}>
                 Giá trị mới
               </Typography.Text>
-              <pre style={{ ...preBase, background: '#f6ffed' }}>{prettyValue(item.newRaw)}</pre>
+              <pre style={newStyle}>{prettyValue(item.newRaw)}</pre>
             </Col>
           </Row>
         </div>

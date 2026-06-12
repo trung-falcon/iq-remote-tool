@@ -1,5 +1,6 @@
+import { CloseCircleOutlined } from '@ant-design/icons';
 import { Alert, Card, Divider, InputNumber, Space, Switch, Typography } from 'antd';
-import { CLOSE_MODE_LABELS, PARAM_KEYS } from '../../../shared/params';
+import { CLOSE_MODE_LABELS, CORNER_LABELS, CORNERS, PARAM_KEYS } from '../../../shared/params';
 import type { CloseConfig } from '../../../shared/schemas';
 import type { ParamSummary } from '../api';
 import { ParamTags } from '../components/param-tags';
@@ -20,7 +21,12 @@ export function CloseConfigEditor({ value, summary, dirty, error, onChange }: Pr
 
   return (
     <Card
-      title="❌ Flow đóng ad (2 giai đoạn)"
+      title={
+        <span>
+          <CloseCircleOutlined style={{ color: '#3b82f6', marginRight: 8 }} />
+          Flow đóng ad (2 giai đoạn)
+        </span>
+      }
       extra={<ParamTags summary={summary} dirty={dirty} />}
     >
       <Typography.Paragraph type="secondary" style={{ marginTop: 0 }}>
@@ -71,22 +77,57 @@ export function CloseConfigEditor({ value, summary, dirty, error, onChange }: Pr
           })
         }
       />
+      <Typography.Paragraph type="secondary" style={{ fontSize: 12, margin: '8px 0 4px' }}>
+        Vị trí nút decoy (random theo trọng số góc):
+      </Typography.Paragraph>
+      <WeightRows
+        weights={value.preClose.positionWeights}
+        order={CORNERS}
+        labels={CORNER_LABELS}
+        disabled={disabled}
+        allowZeroTotal
+        onChange={(key, v) =>
+          onChange({
+            ...value,
+            preClose: {
+              ...value.preClose,
+              positionWeights: { ...value.preClose.positionWeights, [key]: v },
+            },
+          })
+        }
+      />
 
       <Divider orientation="left" plain style={{ margin: '16px 0 8px' }}>
         Giai đoạn 2 — Close thật
       </Divider>
-      <Space align="center">
+      <Space align="center" style={{ marginBottom: 8 }}>
         <Typography.Text type="secondary">Hiện nút X thật sau</Typography.Text>
         <InputNumber
           min={0}
           step={1}
           disabled={disabled}
           value={value.close.delaySeconds}
-          onChange={v => onChange({ ...value, close: { delaySeconds: v ?? 0 } })}
+          onChange={v => onChange({ ...value, close: { ...value.close, delaySeconds: v ?? 0 } })}
           addonAfter="giây"
           style={{ width: 130 }}
         />
       </Space>
+      <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 4 }}>
+        Vị trí nút X thật (random theo trọng số góc):
+      </Typography.Paragraph>
+      <WeightRows
+        weights={value.close.positionWeights}
+        order={CORNERS}
+        labels={CORNER_LABELS}
+        disabled={disabled}
+        allowZeroTotal
+        onChange={(key, v) =>
+          onChange({
+            ...value,
+            close: { ...value.close, positionWeights: { ...value.close.positionWeights, [key]: v } },
+          })
+        }
+      />
 
       {error && <Alert type="error" showIcon style={{ marginTop: 12 }} message={error} />}
     </Card>
