@@ -1,6 +1,7 @@
 import {
   ControlOutlined,
   HistoryOutlined,
+  PartitionOutlined,
   PictureOutlined,
   ReloadOutlined,
   ThunderboltOutlined,
@@ -8,15 +9,17 @@ import {
 import { Button, Layout, Menu, Result, Space, Spin, Tag, Typography } from 'antd';
 import { useState } from 'react';
 import { VersionDrawer } from './components/version-drawer';
+import { AdsWfPage } from './pages/ads-wf-page';
 import { NativeFullscreenPage } from './pages/native-fullscreen-page';
 import { TriggersPage } from './pages/triggers-page';
 import { useTemplate } from './use-template';
 
-type Section = 'native' | 'triggers';
+type Section = 'native' | 'triggers' | 'ads-wf';
 
 const NAV = [
   { key: 'native', icon: <PictureOutlined />, label: 'Native Fullscreen Ad' },
   { key: 'triggers', icon: <ThunderboltOutlined />, label: 'Ad Triggers' },
+  { key: 'ads-wf', icon: <PartitionOutlined />, label: 'Ads Waterfall' },
 ];
 
 export default function RemoteConfigApp() {
@@ -98,8 +101,10 @@ export default function RemoteConfigApp() {
             <Spin size="large" style={{ display: 'block', margin: '120px auto' }} />
           ) : section === 'native' ? (
             <NativeFullscreenPage params={t.params} etag={t.etag} reload={t.reload} />
-          ) : (
+          ) : section === 'triggers' ? (
             <TriggersPage triggers={t.triggers} etag={t.etag} reload={t.reload} />
+          ) : (
+            <AdsWfPage adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
           )}
         </Layout.Content>
       </Layout>

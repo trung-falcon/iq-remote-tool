@@ -3,6 +3,7 @@ import type {
   RemoteConfigParameterValue,
   RemoteConfigTemplate,
 } from 'firebase-admin/remote-config';
+import { ADS_WF_KEYS } from '../../shared/ads-wf-meta';
 import { ALL_PARAM_KEYS, PARAM_KEYS } from '../../shared/params';
 import { validateRawValue } from '../../shared/schemas';
 import { HttpError } from './firebase';
@@ -58,6 +59,15 @@ export function extractTriggers(
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
   for (const key of discoverTriggerKeys(template)) out[key] = summarize(template, key);
+  return out;
+}
+
+// Summarize the 3 ads_wf_config variants (generic + android + ios).
+export function extractAdsWf(
+  template: RemoteConfigTemplate,
+): Record<string, ParamSummary> {
+  const out: Record<string, ParamSummary> = {};
+  for (const key of ADS_WF_KEYS) out[key] = summarize(template, key);
   return out;
 }
 

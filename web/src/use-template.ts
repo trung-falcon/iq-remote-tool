@@ -32,6 +32,7 @@ export function useTemplate() {
     version: data?.version,
     params: data?.params ?? {},
     triggers: data?.triggers ?? {},
+    adsWf: data?.adsWf ?? {},
     reload,
   };
 }

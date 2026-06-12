@@ -1,14 +1,20 @@
 import type { RemoteConfigTemplate } from 'firebase-admin/remote-config';
+import { ADS_WF_KEYS } from '../../shared/ads-wf-meta';
 import { ALL_PARAM_KEYS } from '../../shared/params';
 import { TRIGGER_PREFIX } from '../../shared/trigger-meta';
 
 // Trigger keys are always lowercase ('trigger_' + event.toLowerCase()).
 const TRIGGER_KEY_RE = /^trigger_[a-z0-9_]+$/;
 
-// Allowlist for read/write: the 3 native keys + any trigger_* key. Anything else
-// is refused so a crafted request can never touch unmanaged config.
+// Allowlist for read/write: the 3 native keys + the 3 ads_wf_config variants +
+// any trigger_* key. Anything else is refused so a crafted request can never
+// touch unmanaged config.
 export function isManagedKey(key: string): boolean {
-  return (ALL_PARAM_KEYS as string[]).includes(key) || TRIGGER_KEY_RE.test(key);
+  return (
+    (ALL_PARAM_KEYS as string[]).includes(key) ||
+    (ADS_WF_KEYS as readonly string[]).includes(key) ||
+    TRIGGER_KEY_RE.test(key)
+  );
 }
 
 // All trigger_* params present on the template (top-level + inside groups).

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ADS_WF_KEYS } from './ads-wf-meta';
 import { PARAM_KEYS } from './params';
 import { TRIGGER_PREFIX } from './trigger-meta';
 
@@ -133,6 +134,41 @@ export const triggerSchema = z
   })
   .passthrough();
 
+// Ads waterfall (ads_wf_config + platform variants). Lenient/passthrough; each
+// AdsItem needs a non-empty id + name and valid type/mediation (catches typos in
+// the editor); other fields optional. Timing fields optional (inherit app default).
+const adsItemSchema = z
+  .object({
+    id: z.string().min(1, 'id không được rỗng'),
+    name: z.string().min(1, 'name không được rỗng'),
+    type: z.enum(['reward', 'inter', 'native', 'open_ads', 'banner']),
+    mediation: z.enum(['admob', 'max']),
+    isHigh: z.boolean().optional(),
+    isHighFloor: z.boolean().optional(),
+    disabled: z.boolean().optional(),
+    isPermanentlyStopped: z.boolean().optional(),
+    groupName: z.string().optional(),
+    maxRetryNumber: z.number().min(0).optional(),
+    maxTimeReload: z.number().min(0).optional(),
+  })
+  .passthrough();
+
+const num = z.number().min(0).optional();
+export const adsWfSchema = z
+  .object({
+    ids: adsItemSchema.array().optional(),
+    x: num,
+    y: num,
+    loadInterval: num,
+    maxRetryNumber: num,
+    maxTimeReload: num,
+    coolDownTime: num,
+    continueReloadAfter: num,
+    enableAdmob: z.boolean().optional(),
+    enableMax: z.boolean().optional(),
+  })
+  .passthrough();
+
 // Concise human-readable rendering of a parse/validation failure.
 export function describeError(e: unknown): string {
   if (e instanceof z.ZodError) {
@@ -156,6 +192,7 @@ export function validateRawValue(key: string, raw: string): string | null {
     const parsed = JSON.parse(raw);
     if (key === PARAM_KEYS.closeConfig) closeConfigSchema.parse(parsed);
     else if (key === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
+    else if ((ADS_WF_KEYS as readonly string[]).includes(key)) adsWfSchema.parse(parsed);
     else if (key.startsWith(TRIGGER_PREFIX)) triggerSchema.parse(parsed);
     return null;
   } catch (e) {

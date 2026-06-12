@@ -3,6 +3,7 @@ import type { Version } from 'firebase-admin/remote-config';
 import { HttpError, rc } from './firebase';
 import {
   applyChanges,
+  extractAdsWf,
   extractParams,
   extractTriggers,
   validateChanges,
@@ -51,6 +52,7 @@ routes.get(
       version: versionInfo(template.version),
       params: extractParams(template),
       triggers: extractTriggers(template),
+      adsWf: extractAdsWf(template),
     });
   }),
 );
