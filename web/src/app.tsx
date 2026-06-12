@@ -17,14 +17,14 @@ import { useTemplate } from './use-template';
 type Section = 'native' | 'triggers' | 'ads-wf';
 
 const NAV = [
-  { key: 'native', icon: <PictureOutlined />, label: 'Native Fullscreen Ad' },
-  { key: 'triggers', icon: <ThunderboltOutlined />, label: 'Ad Triggers' },
   { key: 'ads-wf', icon: <PartitionOutlined />, label: 'Ads Waterfall' },
+  { key: 'triggers', icon: <ThunderboltOutlined />, label: 'Ad Triggers' },
+  { key: 'native', icon: <PictureOutlined />, label: 'Native Fullscreen Ad' },
 ];
 
 export default function RemoteConfigApp() {
   const t = useTemplate();
-  const [section, setSection] = useState<Section>('native');
+  const [section, setSection] = useState<Section>('ads-wf');
   const [historyOpen, setHistoryOpen] = useState(false);
 
   return (
