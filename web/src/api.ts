@@ -17,6 +17,7 @@ export type TemplateResponse = {
   etag: string;
   version?: VersionInfo;
   params: Record<string, ParamSummary>;
+  triggers: Record<string, ParamSummary>;
 };
 
 export type FieldError = { param: string; message: string };

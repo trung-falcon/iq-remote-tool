@@ -3,9 +3,10 @@ import type {
   RemoteConfigParameterValue,
   RemoteConfigTemplate,
 } from 'firebase-admin/remote-config';
-import { ALL_PARAM_KEYS, PARAM_KEYS, type ParamKey } from '../../shared/params';
+import { ALL_PARAM_KEYS, PARAM_KEYS } from '../../shared/params';
 import { validateRawValue } from '../../shared/schemas';
 import { HttpError } from './firebase';
+import { discoverTriggerKeys, isManagedKey } from './managed-keys';
 
 export type ParamSummary = {
   exists: boolean;
@@ -32,20 +33,31 @@ function findParam(
   return undefined;
 }
 
-// Summarize only the params this tool manages — never expose/edit the rest.
+function summarize(template: RemoteConfigTemplate, key: string): ParamSummary {
+  const param = findParam(template, key);
+  return {
+    exists: !!param,
+    defaultValue: readValue(param?.defaultValue),
+    hasConditionalValues:
+      !!param?.conditionalValues && Object.keys(param.conditionalValues).length > 0,
+  };
+}
+
+// Summarize the 3 native fullscreen params.
 export function extractParams(
   template: RemoteConfigTemplate,
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
-  for (const key of ALL_PARAM_KEYS) {
-    const param = findParam(template, key);
-    out[key] = {
-      exists: !!param,
-      defaultValue: readValue(param?.defaultValue),
-      hasConditionalValues:
-        !!param?.conditionalValues && Object.keys(param.conditionalValues).length > 0,
-    };
-  }
+  for (const key of ALL_PARAM_KEYS) out[key] = summarize(template, key);
+  return out;
+}
+
+// Summarize every trigger_* param discovered on the template.
+export function extractTriggers(
+  template: RemoteConfigTemplate,
+): Record<string, ParamSummary> {
+  const out: Record<string, ParamSummary> = {};
+  for (const key of discoverTriggerKeys(template)) out[key] = summarize(template, key);
   return out;
 }
 
@@ -55,11 +67,11 @@ export type Changes = Record<string, string>;
 export function validateChanges(changes: Changes): { param: string; message: string }[] {
   const errors: { param: string; message: string }[] = [];
   for (const [key, raw] of Object.entries(changes)) {
-    if (!ALL_PARAM_KEYS.includes(key as ParamKey)) {
-      errors.push({ param: key, message: 'Unknown parameter — this tool only manages the 3 fullscreen_native keys' });
+    if (!isManagedKey(key)) {
+      errors.push({ param: key, message: 'Unknown parameter — tool only manages the fullscreen_native keys and trigger_* keys' });
       continue;
     }
-    const message = validateRawValue(key as ParamKey, raw);
+    const message = validateRawValue(key, raw);
     if (message) errors.push({ param: key, message });
   }
   return errors;
@@ -70,7 +82,7 @@ export function validateChanges(changes: Changes): { param: string; message: str
 // Conditions, parameterGroups, other parameters and conditionalValues stay untouched.
 export function applyChanges(template: RemoteConfigTemplate, changes: Changes): void {
   for (const [key, raw] of Object.entries(changes)) {
-    if (!ALL_PARAM_KEYS.includes(key as ParamKey)) {
+    if (!isManagedKey(key)) {
       throw new HttpError(400, `Refusing to modify unmanaged parameter "${key}"`);
     }
     const existing = findParam(template, key);

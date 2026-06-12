@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { PARAM_KEYS, type ParamKey } from './params';
+import { PARAM_KEYS } from './params';
+import { TRIGGER_PREFIX } from './trigger-meta';
 
 const weight = z.number().min(0, 'Trọng số phải >= 0');
 
@@ -71,6 +72,67 @@ export type LayoutWeights = z.infer<typeof layoutWeightsSchema>;
 
 export const timeoutSchema = z.number().min(0, 'Timeout phải >= 0');
 
+// Ad trigger — stored values are PARTIAL overrides (unset fields inherit the
+// app default), so every field is optional. passthrough() preserves anything the
+// app reads but this tool doesn't model. Enums are only checked when present.
+const adsTypeEnum = z.enum(['reward', 'inter', 'native', 'open_ads', 'banner']);
+const adsTypeField = z.union([adsTypeEnum, adsTypeEnum.array()]);
+const mediationEnum = z.enum(['admob', 'max']);
+
+const adAfterAdSchema = z
+  .object({
+    active: z.boolean().optional(),
+    adsType: adsTypeField.optional(),
+    mediation: mediationEnum.optional(),
+    adsGroup: z.string().optional(),
+    loadOnPrevAdOpen: z.boolean().optional(),
+  })
+  .passthrough();
+
+const showAdSchema = z
+  .object({
+    active: z.boolean().optional(),
+    updateToLastShow: z.boolean().optional(),
+    timeAwaitHighBeforeShow: z.number().min(0).optional(),
+    skipCoolDownTime: z.boolean().optional(),
+    adsType: adsTypeField.optional(),
+    mediation: mediationEnum.optional(),
+    adsGroup: z.string().optional(),
+    purchaseAfterAds: z.boolean().optional(),
+    adAfterAd: adAfterAdSchema.optional(),
+  })
+  .passthrough();
+
+const paywallSchema = z
+  .object({
+    active: z.boolean().optional(),
+    screens: z
+      .object({ superwall: z.string().optional(), legacy: z.number().int().min(0).max(5) })
+      .passthrough()
+      .array()
+      .optional(),
+    cooldownTime: z.number().min(0).optional(),
+    skipAfterNShows: z.number().min(0).optional(),
+    swapAfterNS: z.number().array().optional(),
+  })
+  .passthrough();
+
+export const triggerSchema = z
+  .object({
+    log: z.boolean().optional(),
+    executionOrder: z.enum(['ad_first', 'paywall_first']).optional(),
+    showAd: showAdSchema.optional(),
+    enableAd: z.string().array().optional(),
+    disableAd: z
+      .object({ ads: z.string().array(), permanentlyStop: z.boolean().optional() })
+      .passthrough()
+      .optional(),
+    continueIfNoAds: z.boolean().optional(),
+    paywall: paywallSchema.optional(),
+    superwallPreload: z.string().array().optional(),
+  })
+  .passthrough();
+
 // Concise human-readable rendering of a parse/validation failure.
 export function describeError(e: unknown): string {
   if (e instanceof z.ZodError) {
@@ -81,9 +143,9 @@ export function describeError(e: unknown): string {
   return e instanceof SyntaxError ? `JSON lỗi cú pháp: ${e.message}` : String(e);
 }
 
-// Validate the raw Remote Config string value of a given param key.
-// Returns null when valid, otherwise a human-readable error message.
-export function validateRawValue(key: ParamKey, raw: string): string | null {
+// Validate the raw Remote Config string value of a given param key (native or
+// any trigger_*). Returns null when valid, otherwise a human-readable message.
+export function validateRawValue(key: string, raw: string): string | null {
   try {
     if (key === PARAM_KEYS.timeout) {
       const n = Number(raw);
@@ -93,7 +155,8 @@ export function validateRawValue(key: ParamKey, raw: string): string | null {
     }
     const parsed = JSON.parse(raw);
     if (key === PARAM_KEYS.closeConfig) closeConfigSchema.parse(parsed);
-    if (key === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
+    else if (key === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
+    else if (key.startsWith(TRIGGER_PREFIX)) triggerSchema.parse(parsed);
     return null;
   } catch (e) {
     return describeError(e);

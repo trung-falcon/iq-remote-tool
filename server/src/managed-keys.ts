@@ -1,0 +1,27 @@
+import type { RemoteConfigTemplate } from 'firebase-admin/remote-config';
+import { ALL_PARAM_KEYS } from '../../shared/params';
+import { TRIGGER_PREFIX } from '../../shared/trigger-meta';
+
+// Trigger keys are always lowercase ('trigger_' + event.toLowerCase()).
+const TRIGGER_KEY_RE = /^trigger_[a-z0-9_]+$/;
+
+// Allowlist for read/write: the 3 native keys + any trigger_* key. Anything else
+// is refused so a crafted request can never touch unmanaged config.
+export function isManagedKey(key: string): boolean {
+  return (ALL_PARAM_KEYS as string[]).includes(key) || TRIGGER_KEY_RE.test(key);
+}
+
+// All trigger_* params present on the template (top-level + inside groups).
+export function discoverTriggerKeys(template: RemoteConfigTemplate): string[] {
+  const keys = new Set<string>();
+  const collect = (params?: Record<string, unknown>) => {
+    for (const k of Object.keys(params ?? {})) {
+      if (k.startsWith(TRIGGER_PREFIX)) keys.add(k);
+    }
+  };
+  collect(template.parameters);
+  for (const group of Object.values(template.parameterGroups ?? {})) {
+    collect(group.parameters);
+  }
+  return [...keys].sort();
+}

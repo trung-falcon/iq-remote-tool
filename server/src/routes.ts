@@ -1,7 +1,13 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import type { Version } from 'firebase-admin/remote-config';
 import { HttpError, rc } from './firebase';
-import { applyChanges, extractParams, validateChanges, type Changes } from './template-utils';
+import {
+  applyChanges,
+  extractParams,
+  extractTriggers,
+  validateChanges,
+  type Changes,
+} from './template-utils';
 
 const h =
   (fn: (req: Request, res: Response) => Promise<void>) =>
@@ -44,6 +50,7 @@ routes.get(
       etag: template.etag,
       version: versionInfo(template.version),
       params: extractParams(template),
+      triggers: extractTriggers(template),
     });
   }),
 );
