@@ -35,10 +35,15 @@ export class ApiError extends Error {
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...init });
+  } catch {
+    // fetch only rejects on network-level failures (server down, proxy reset).
+    throw new ApiError(0, {
+      error: 'Không kết nối được API server (localhost:4000). Hãy chắc chắn `yarn dev` đang chạy (cả api + web).',
+    });
+  }
   const payload = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
   if (!res.ok) throw new ApiError(res.status, payload);
   return payload as T;
