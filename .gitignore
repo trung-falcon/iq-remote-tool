@@ -7,5 +7,6 @@ service-account.json
 node_modules/
 dist/
 web/dist/
+.claude/
 *.log
 .DS_Store

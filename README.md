@@ -43,4 +43,3 @@ yarn dev
 |---|---|
 | `yarn dev` | Chạy cả API (4000) + web (5173) |
 | `yarn typecheck` | Kiểm tra TypeScript cả server + web |
-| `yarn build:web` | Build production web |

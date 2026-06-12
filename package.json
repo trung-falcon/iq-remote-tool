@@ -7,10 +7,10 @@
     "dev": "concurrently -n api,web -c blue,green \"yarn dev:server\" \"yarn dev:web\"",
     "dev:server": "tsx watch server/src/index.ts",
     "dev:web": "vite web",
-    "build:web": "vite build web",
     "typecheck": "tsc --noEmit && tsc --noEmit -p web/tsconfig.json"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.5.0",
     "antd": "^5.22.0",
     "express": "^4.21.0",
     "firebase-admin": "^13.0.0",
