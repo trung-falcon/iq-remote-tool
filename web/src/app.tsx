@@ -102,7 +102,7 @@ export default function RemoteConfigApp() {
           ) : section === 'native' ? (
             <NativeFullscreenPage params={t.params} etag={t.etag} reload={t.reload} />
           ) : section === 'triggers' ? (
-            <TriggersPage triggers={t.triggers} etag={t.etag} reload={t.reload} />
+            <TriggersPage triggers={t.triggers} adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
           ) : (
             <AdsWfPage adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
           )}

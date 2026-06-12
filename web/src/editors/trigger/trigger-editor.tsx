@@ -16,7 +16,15 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
   );
 }
 
-export function TriggerEditor({ value, onChange }: { value: Trigger; onChange: (t: Trigger) => void }) {
+export function TriggerEditor({
+  value,
+  onChange,
+  adGroupOptions,
+}: {
+  value: Trigger;
+  onChange: (t: Trigger) => void;
+  adGroupOptions: string[];
+}) {
   const set = (patch: Partial<Trigger>) => onChange({ ...value, ...patch });
 
   return (
@@ -38,12 +46,13 @@ export function TriggerEditor({ value, onChange }: { value: Trigger; onChange: (
         </Row>
       </Card>
 
-      <ShowAdSection value={value.showAd} onChange={showAd => set({ showAd })} />
+      <ShowAdSection value={value.showAd} onChange={showAd => set({ showAd })} adGroupOptions={adGroupOptions} />
       <PaywallSection value={value.paywall} onChange={paywall => set({ paywall })} />
       <ToggleSection
         enableAd={value.enableAd}
         disableAd={value.disableAd}
         superwallPreload={value.superwallPreload}
+        adGroupOptions={adGroupOptions}
         onChange={set}
       />
     </Space>

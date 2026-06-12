@@ -55,16 +55,16 @@ export type Changes = Record<string, string>;
 export const api = {
   getTemplate: () => request<TemplateResponse>('/api/template'),
 
-  validate: (changes: Changes) =>
+  validate: (changes: Changes, deletes: string[] = []) =>
     request<{ valid: true }>('/api/validate', {
       method: 'POST',
-      body: JSON.stringify({ changes }),
+      body: JSON.stringify({ changes, deletes }),
     }),
 
-  publish: (etag: string, changes: Changes) =>
+  publish: (etag: string, changes: Changes, deletes: string[] = []) =>
     request<{ etag: string; versionNumber?: string }>('/api/publish', {
       method: 'POST',
-      body: JSON.stringify({ etag, changes }),
+      body: JSON.stringify({ etag, changes, deletes }),
     }),
 
   versions: () => request<{ versions: VersionInfo[] }>('/api/versions'),

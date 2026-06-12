@@ -107,3 +107,23 @@ export function applyChanges(template: RemoteConfigTemplate, changes: Changes): 
     }
   }
 }
+
+// Remove managed params entirely — top-level or inside a parameter group.
+// Everything else stays untouched.
+export function applyDeletes(template: RemoteConfigTemplate, deletes: string[]): void {
+  for (const key of deletes) {
+    if (!isManagedKey(key)) {
+      throw new HttpError(400, `Refusing to delete unmanaged parameter "${key}"`);
+    }
+    if (template.parameters[key]) {
+      delete template.parameters[key];
+      continue;
+    }
+    for (const group of Object.values(template.parameterGroups ?? {})) {
+      if (group.parameters?.[key]) {
+        delete group.parameters[key];
+        break;
+      }
+    }
+  }
+}

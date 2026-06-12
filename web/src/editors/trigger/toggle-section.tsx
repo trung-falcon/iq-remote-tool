@@ -8,6 +8,7 @@ type Props = {
   enableAd?: string[];
   disableAd?: Trigger['disableAd'];
   superwallPreload?: string[];
+  adGroupOptions: string[];
   onChange: (patch: Partial<Trigger>) => void;
 };
 
@@ -23,12 +24,13 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-export function ToggleSection({ enableAd, disableAd, superwallPreload, onChange }: Props) {
+export function ToggleSection({ enableAd, disableAd, superwallPreload, adGroupOptions, onChange }: Props) {
   return (
     <Card title="Bật / tắt ad group & preload">
       <Field label="Enable ad groups" hint="tên group cần bật">
         <StringListInput
           value={enableAd}
+          options={adGroupOptions}
           placeholder="vd: onboard_1"
           onChange={v => onChange({ enableAd: v as string[] | undefined })}
         />
@@ -37,6 +39,7 @@ export function ToggleSection({ enableAd, disableAd, superwallPreload, onChange 
       <Field label="Disable ad groups" hint="tên group cần tắt">
         <StringListInput
           value={disableAd?.ads}
+          options={adGroupOptions}
           placeholder="vd: onboard_1"
           onChange={v =>
             onChange({

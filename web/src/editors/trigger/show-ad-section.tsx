@@ -1,7 +1,30 @@
-import { Card, Divider, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
+import { AutoComplete, Card, Divider, Input, InputNumber, Select, Space, Switch, Typography } from 'antd';
 import { ADS_TYPES, MEDIATIONS, type AdsType, type ShowAd } from '../../../../shared/trigger-meta';
 
 const { Text } = Typography;
+
+// Ad group input with suggestions from the Ads Waterfall (groupName/name), still free-text.
+function AdGroupInput({
+  value,
+  options,
+  onChange,
+}: {
+  value?: string;
+  options: string[];
+  onChange: (v?: string) => void;
+}) {
+  return (
+    <AutoComplete
+      style={{ width: 280 }}
+      allowClear
+      value={value}
+      options={options.map(o => ({ value: o }))}
+      placeholder="(không đặt) — gợi ý từ Ads Waterfall"
+      filterOption={(i, o) => (o?.value ?? '').toLowerCase().includes(i.toLowerCase())}
+      onChange={v => onChange(v || undefined)}
+    />
+  );
+}
 
 function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
@@ -41,7 +64,15 @@ function AdsTypeSelect({
 
 const mediationOptions = MEDIATIONS.map(m => ({ value: m, label: m }));
 
-export function ShowAdSection({ value, onChange }: { value: ShowAd; onChange: (s: ShowAd) => void }) {
+export function ShowAdSection({
+  value,
+  onChange,
+  adGroupOptions,
+}: {
+  value: ShowAd;
+  onChange: (s: ShowAd) => void;
+  adGroupOptions: string[];
+}) {
   const set = (patch: Partial<ShowAd>) => onChange({ ...value, ...patch });
   const aa = value.adAfterAd;
   const setAA = (patch: Partial<NonNullable<ShowAd['adAfterAd']>>) =>
@@ -71,11 +102,10 @@ export function ShowAdSection({ value, onChange }: { value: ShowAd; onChange: (s
           />
         </Row>
         <Row label="Ad group" hint="vd: onboard_1">
-          <Input
-            style={{ width: 240 }}
-            placeholder="(không đặt)"
+          <AdGroupInput
             value={value.adsGroup}
-            onChange={e => set({ adsGroup: e.target.value || undefined })}
+            options={adGroupOptions}
+            onChange={adsGroup => set({ adsGroup })}
           />
         </Row>
         <Row label="Chờ high-floor (ms)">
@@ -121,10 +151,10 @@ export function ShowAdSection({ value, onChange }: { value: ShowAd; onChange: (s
               />
             </Row>
             <Row label="Ad group (ad-2)">
-              <Input
-                style={{ width: 240 }}
+              <AdGroupInput
                 value={aa.adsGroup}
-                onChange={e => setAA({ adsGroup: e.target.value || undefined })}
+                options={adGroupOptions}
+                onChange={adsGroup => setAA({ adsGroup })}
               />
             </Row>
             <Row label="Preload khi ad-1 mở">

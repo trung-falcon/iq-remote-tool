@@ -3,6 +3,7 @@ import type { Version } from 'firebase-admin/remote-config';
 import { HttpError, rc } from './firebase';
 import {
   applyChanges,
+  applyDeletes,
   extractAdsWf,
   extractParams,
   extractTriggers,
@@ -26,19 +27,30 @@ function versionInfo(version: Version | undefined) {
 }
 
 function parseChanges(body: unknown): Changes {
-  const changes = (body as { changes?: unknown })?.changes;
+  const changes = (body as { changes?: unknown })?.changes ?? {};
   if (
-    !changes ||
     typeof changes !== 'object' ||
     Array.isArray(changes) ||
     Object.values(changes).some(v => typeof v !== 'string')
   ) {
     throw new HttpError(400, 'Body must be { changes: { [paramKey]: string } }');
   }
-  if (Object.keys(changes).length === 0) {
+  return changes as Changes;
+}
+
+function parseDeletes(body: unknown): string[] {
+  const deletes = (body as { deletes?: unknown })?.deletes ?? [];
+  if (!Array.isArray(deletes) || deletes.some(v => typeof v !== 'string')) {
+    throw new HttpError(400, 'deletes must be string[]');
+  }
+  return deletes as string[];
+}
+
+// At least one mutation (a changed value or a deletion) must be present.
+function ensureNonEmpty(changes: Changes, deletes: string[]): void {
+  if (Object.keys(changes).length === 0 && deletes.length === 0) {
     throw new HttpError(400, 'No changes provided');
   }
-  return changes as Changes;
 }
 
 export const routes = Router();
@@ -61,6 +73,8 @@ routes.post(
   '/validate',
   h(async (req, res) => {
     const changes = parseChanges(req.body);
+    const deletes = parseDeletes(req.body);
+    ensureNonEmpty(changes, deletes);
     const errors = validateChanges(changes);
     if (errors.length) {
       res.status(400).json({ valid: false, errors });
@@ -68,6 +82,7 @@ routes.post(
     }
     const template = await rc().getTemplate();
     applyChanges(template, changes);
+    applyDeletes(template, deletes);
     try {
       await rc().validateTemplate(template);
     } catch (e) {
@@ -87,6 +102,8 @@ routes.post(
     const { etag } = req.body as { etag?: unknown };
     if (typeof etag !== 'string' || !etag) throw new HttpError(400, 'Missing etag');
     const changes = parseChanges(req.body);
+    const deletes = parseDeletes(req.body);
+    ensureNonEmpty(changes, deletes);
     const errors = validateChanges(changes);
     if (errors.length) {
       res.status(400).json({ errors });
@@ -98,6 +115,7 @@ routes.post(
       return;
     }
     applyChanges(template, changes);
+    applyDeletes(template, deletes);
     const validated = await rc().validateTemplate(template);
     const published = await rc().publishTemplate(validated);
     res.json({

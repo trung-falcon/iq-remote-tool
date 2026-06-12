@@ -6,6 +6,7 @@ export type DiffItem = {
   oldRaw: string; // current value on Firebase ('' when param doesn't exist yet)
   newRaw: string; // value that will be published
   exists: boolean;
+  deleted?: boolean; // param will be removed from the template entirely
 };
 
 const preBase: React.CSSProperties = {
@@ -61,22 +62,31 @@ export function DiffModal({ open, items, loading, onConfirm, onCancel }: Props) 
           <Typography.Text strong style={{ fontFamily: 'monospace' }}>
             {item.key}
           </Typography.Text>
-          <Row gutter={12} style={{ marginTop: 4 }}>
-            <Col span={12}>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                Hiện tại trên Firebase
+          {item.deleted ? (
+            <>
+              <Typography.Text type="danger" style={{ fontSize: 12, display: 'block' }}>
+                🗑 Sẽ XÓA HẲN param này khỏi Firebase (app dùng in-app default)
               </Typography.Text>
-              <pre style={oldStyle}>
-                {item.exists ? prettyValue(item.oldRaw) : '(chưa tồn tại — sẽ được tạo mới)'}
-              </pre>
-            </Col>
-            <Col span={12}>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
-                Giá trị mới
-              </Typography.Text>
-              <pre style={newStyle}>{prettyValue(item.newRaw)}</pre>
-            </Col>
-          </Row>
+              <pre style={oldStyle}>{prettyValue(item.oldRaw)}</pre>
+            </>
+          ) : (
+            <Row gutter={12} style={{ marginTop: 4 }}>
+              <Col span={12}>
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  Hiện tại trên Firebase
+                </Typography.Text>
+                <pre style={oldStyle}>
+                  {item.exists ? prettyValue(item.oldRaw) : '(chưa tồn tại — sẽ được tạo mới)'}
+                </pre>
+              </Col>
+              <Col span={12}>
+                <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                  Giá trị mới
+                </Typography.Text>
+                <pre style={newStyle}>{prettyValue(item.newRaw)}</pre>
+              </Col>
+            </Row>
+          )}
         </div>
       ))}
     </Modal>

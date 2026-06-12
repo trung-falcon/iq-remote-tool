@@ -4,17 +4,20 @@ type Props = {
   value?: (string | number)[];
   numeric?: boolean;
   placeholder?: string;
+  options?: string[]; // suggestions (still free entry); shows a dropdown when set
   onChange: (next: string[] | number[] | undefined) => void;
 };
 
 // Free-entry list editor (AntD tags mode). Empty → undefined so the field is
 // omitted on serialize. `numeric` parses tokens to numbers (for swapAfterNS).
-export function StringListInput({ value, numeric, placeholder, onChange }: Props) {
+// `options` adds autocomplete suggestions (e.g. ad group/name from ads_wf).
+export function StringListInput({ value, numeric, placeholder, options, onChange }: Props) {
   return (
     <Select
       mode="tags"
-      open={false}
-      suffixIcon={null}
+      open={options ? undefined : false}
+      suffixIcon={options ? undefined : null}
+      options={options?.map(o => ({ value: o }))}
       style={{ width: '100%' }}
       placeholder={placeholder}
       value={(value ?? []).map(String)}
