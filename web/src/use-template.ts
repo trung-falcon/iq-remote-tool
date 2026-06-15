@@ -33,7 +33,8 @@ export function useTemplate() {
     params: data?.params ?? {},
     triggers: data?.triggers ?? {},
     adsWf: data?.adsWf ?? {},
-    nativeAds: data?.nativeAds ?? {},
+    screens: data?.screens ?? {},
+    obsoleteNative: data?.obsoleteNative ?? {},
     reload,
   };
 }

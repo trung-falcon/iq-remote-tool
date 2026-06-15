@@ -1,48 +1,8 @@
-// Inline native ad placement config (control_native_*). Mirrors the app's
-// NATIVE_ADS_POSITION_KEYS_LIST + NativeAdConfig (brain-training/src/types/index.tsx
-// + src/new-ads/nativeAdConfig.ts). The app merges each field independently over its
-// in-app default, so partial writes are safe; we preserve the full object + any
-// unknown fields on round-trip (preservation-first).
+// Native ad config value shape (NativeAdRemoteConfigType / NativeAdConfig in the
+// app) + display metadata for the native-ad editor. This config is embedded
+// per-screen (control_onboard_screen_* / control_language_screens) — there is no
+// shared control_native_* catalog anymore. App merges each field independently.
 
-export const NATIVE_AD_PREFIX = 'control_native_';
-
-// Catalog order = app's NATIVE_ADS_POSITION_KEYS_LIST.
-export const NATIVE_AD_POSITIONS = [
-  'common',
-  'done_onboard',
-  'enter_game',
-  'next_level',
-  'setting',
-  'onboard1',
-  'onboard2',
-  'in_game',
-] as const;
-
-export type NativeAdPosition = (typeof NATIVE_AD_POSITIONS)[number];
-
-export const controlNativeKeyFor = (pos: string): string => NATIVE_AD_PREFIX + pos;
-export const positionFromKey = (key: string): string =>
-  key.startsWith(NATIVE_AD_PREFIX) ? key.slice(NATIVE_AD_PREFIX.length) : key;
-
-// Any control_native_* key (allowlist + discovery; lowercase like the app emits).
-export const NATIVE_AD_KEY_RE = /^control_native_[a-z0-9_]+$/;
-
-// The 8 catalog keys, in order.
-export const NATIVE_AD_KEYS: string[] = NATIVE_AD_POSITIONS.map(controlNativeKeyFor);
-
-// Friendly labels per placement (vi).
-export const NATIVE_AD_POSITION_LABELS: Record<string, string> = {
-  common: 'Chung',
-  done_onboard: 'Hoàn tất onboard',
-  enter_game: 'Vào game',
-  next_level: 'Màn tiếp theo',
-  setting: 'Cài đặt ngôn ngữ',
-  onboard1: 'Onboard 1',
-  onboard2: 'Onboard 2',
-  in_game: 'Trong game',
-};
-
-// --- Value shape (NativeAdRemoteConfigType / NativeAdConfig) ---
 export type NativeAdLayoutConfig = {
   hideMedia?: boolean;
   space?: number;
@@ -65,7 +25,7 @@ export type NativeAdConfig = {
   random?: number[];
 };
 
-// App default (nativeAdConfig.ts defaultNativeConfig) — seed for newly created keys.
+// App default (nativeAdConfig.ts DEFAULT_NATIVE_AD_CONFIG) — base for per-screen merges.
 export const DEFAULT_NATIVE_AD_CONFIG: NativeAdConfig = {
   showAds: true,
   preload: false,

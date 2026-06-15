@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ADS_WF_KEYS } from './ads-wf-meta';
-import { NATIVE_AD_KEY_RE } from './native-ad-meta';
+import { LANGUAGE_SCREEN_KEY, ONBOARD_SCREEN_RE } from './screen-native-meta';
 import { PARAM_KEYS } from './params';
 import { TRIGGER_PREFIX } from './trigger-meta';
 
@@ -203,6 +203,35 @@ export const nativeAdConfigSchema = z
   })
   .passthrough();
 
+// Per-screen native ad config. Onboard screens (control_onboard_screen_*) carry
+// layout + an embedded nativeAdConfig; the language screen (control_language_screens)
+// carries its own fields. All optional (partial override); passthrough preserves
+// fields the app reads but this tool doesn't model.
+export const onboardScreenSchema = z
+  .object({
+    adType: z.enum(['native', 'banner', 'none']).optional(),
+    showAd: z.boolean().optional(),
+    continueBtnType: z.enum(['small', 'large', 'none']).optional(),
+    continueBtnPosition: z.enum(['bottom', 'top']).optional(),
+    progressBarPosition: z.enum(['top', 'bottom']).optional(),
+    smallBtnMode: z.enum(['text', 'fill', 'stroke']).optional(),
+    progressStep: z.boolean().optional(),
+    continueWhenClickAd: z.boolean().optional(),
+    nativeAdGroup: z.string().optional(),
+    nativeAdConfig: nativeAdConfigSchema.optional(),
+  })
+  .passthrough();
+
+export const languageScreenSchema = z
+  .object({
+    adType: z.enum(['native', 'banner', 'none']).optional(),
+    saveBtnMode: z.enum(['fill', 'stroke']).optional(),
+    countdownTimer: z.number().min(0).optional(),
+    continueWhenClickAd: z.boolean().optional(),
+    nativeAdConfig: nativeAdConfigSchema.optional(),
+  })
+  .passthrough();
+
 // Concise human-readable rendering of a parse/validation failure.
 export function describeError(e: unknown): string {
   if (e instanceof z.ZodError) {
@@ -227,7 +256,8 @@ export function validateRawValue(key: string, raw: string): string | null {
     if (key === PARAM_KEYS.closeConfig) closeConfigSchema.parse(parsed);
     else if (key === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
     else if ((ADS_WF_KEYS as readonly string[]).includes(key)) adsWfSchema.parse(parsed);
-    else if (NATIVE_AD_KEY_RE.test(key)) nativeAdConfigSchema.parse(parsed);
+    else if (ONBOARD_SCREEN_RE.test(key)) onboardScreenSchema.parse(parsed);
+    else if (key === LANGUAGE_SCREEN_KEY) languageScreenSchema.parse(parsed);
     else if (key.startsWith(TRIGGER_PREFIX)) triggerSchema.parse(parsed);
     return null;
   } catch (e) {

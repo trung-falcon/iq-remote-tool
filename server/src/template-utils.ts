@@ -6,8 +6,14 @@ import type {
 import { ADS_WF_KEYS } from '../../shared/ads-wf-meta';
 import { ALL_PARAM_KEYS, PARAM_KEYS } from '../../shared/params';
 import { validateRawValue } from '../../shared/schemas';
+import { LANGUAGE_SCREEN_KEY } from '../../shared/screen-native-meta';
 import { HttpError } from './firebase';
-import { discoverNativeAdKeys, discoverTriggerKeys, isManagedKey } from './managed-keys';
+import {
+  discoverObsoleteNativeKeys,
+  discoverOnboardScreenKeys,
+  discoverTriggerKeys,
+  isManagedKey,
+} from './managed-keys';
 
 export type ParamSummary = {
   exists: boolean;
@@ -71,12 +77,23 @@ export function extractAdsWf(
   return out;
 }
 
-// Summarize every control_native_* (inline native ad) param discovered on the template.
-export function extractNativeAds(
+// Summarize per-screen native configs: every control_onboard_screen_* discovered
+// + the fixed control_language_screens key.
+export function extractScreens(
   template: RemoteConfigTemplate,
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
-  for (const key of discoverNativeAdKeys(template)) out[key] = summarize(template, key);
+  for (const key of discoverOnboardScreenKeys(template)) out[key] = summarize(template, key);
+  out[LANGUAGE_SCREEN_KEY] = summarize(template, LANGUAGE_SCREEN_KEY);
+  return out;
+}
+
+// Summarize leftover legacy control_native_* keys (for one-time cleanup).
+export function extractObsoleteNative(
+  template: RemoteConfigTemplate,
+): Record<string, ParamSummary> {
+  const out: Record<string, ParamSummary> = {};
+  for (const key of discoverObsoleteNativeKeys(template)) out[key] = summarize(template, key);
   return out;
 }
 

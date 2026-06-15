@@ -22,19 +22,23 @@ function Row({ label, hint, children }: { label: string; hint: string; children:
   );
 }
 
-// Editor for one inline native ad placement (control_native_*). onChange always
-// spreads `value` so unknown/passthrough fields survive the edit.
+// Editor for a native ad config (embedded per-screen). onChange always spreads
+// `value` so unknown/passthrough fields survive the edit. `hideShowAds` drops the
+// showAds toggle for contexts where on/off is gated elsewhere (per-screen showAd/adType).
 export function NativeAdEditor({
   value,
   onChange,
+  hideShowAds,
 }: {
   value: NativeAdConfig;
   onChange: (next: NativeAdConfig) => void;
+  hideShowAds?: boolean;
 }) {
+  const toggles = hideShowAds ? TOGGLES.filter(t => t.key !== 'showAds') : TOGGLES;
   return (
     <Space direction="vertical" size={16} style={{ width: '100%' }}>
       <Card title="Cấu hình chung" size="small">
-        {TOGGLES.map(t => (
+        {toggles.map(t => (
           <Row key={t.key} label={t.label} hint={t.hint}>
             <Switch checked={!!value[t.key]} onChange={v => onChange({ ...value, [t.key]: v })} />
           </Row>

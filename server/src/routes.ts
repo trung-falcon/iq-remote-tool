@@ -5,8 +5,9 @@ import {
   applyChanges,
   applyDeletes,
   extractAdsWf,
-  extractNativeAds,
+  extractObsoleteNative,
   extractParams,
+  extractScreens,
   extractTriggers,
   validateChanges,
   type Changes,
@@ -66,7 +67,8 @@ routes.get(
       params: extractParams(template),
       triggers: extractTriggers(template),
       adsWf: extractAdsWf(template),
-      nativeAds: extractNativeAds(template),
+      screens: extractScreens(template),
+      obsoleteNative: extractObsoleteNative(template),
     });
   }),
 );
