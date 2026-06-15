@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ADS_WF_KEYS } from './ads-wf-meta';
+import { NATIVE_AD_KEY_RE } from './native-ad-meta';
 import { PARAM_KEYS } from './params';
 import { TRIGGER_PREFIX } from './trigger-meta';
 
@@ -169,6 +170,39 @@ export const adsWfSchema = z
   })
   .passthrough();
 
+// Inline native ad placement config (control_native_*). All fields optional — the
+// app merges each field independently over its in-app default. passthrough() keeps
+// fields the app reads but this tool doesn't model (same risk control_language_screens
+// already showed with real data).
+const nativeLayoutItemSchema = z
+  .object({
+    id: z.number(),
+    customLayout: z
+      .object({
+        hideMedia: z.boolean().optional(),
+        space: z.number().optional(),
+        hideIcon: z.boolean().optional(),
+        smallFont: z.boolean().optional(),
+        hideBody: z.boolean().optional(),
+        hideButton: z.boolean().optional(),
+        reverse: z.boolean().optional(),
+        hideTagLine: z.boolean().optional(),
+        callToActionStyle: z.enum(['fill', 'stroke']).optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
+export const nativeAdConfigSchema = z
+  .object({
+    showAds: z.boolean().optional(),
+    preload: z.boolean().optional(),
+    highEcpm: z.boolean().optional(),
+    layout: nativeLayoutItemSchema.array().optional(),
+    random: z.number().min(0, 'Trọng số phải >= 0').array().optional(),
+  })
+  .passthrough();
+
 // Concise human-readable rendering of a parse/validation failure.
 export function describeError(e: unknown): string {
   if (e instanceof z.ZodError) {
@@ -193,6 +227,7 @@ export function validateRawValue(key: string, raw: string): string | null {
     if (key === PARAM_KEYS.closeConfig) closeConfigSchema.parse(parsed);
     else if (key === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
     else if ((ADS_WF_KEYS as readonly string[]).includes(key)) adsWfSchema.parse(parsed);
+    else if (NATIVE_AD_KEY_RE.test(key)) nativeAdConfigSchema.parse(parsed);
     else if (key.startsWith(TRIGGER_PREFIX)) triggerSchema.parse(parsed);
     return null;
   } catch (e) {

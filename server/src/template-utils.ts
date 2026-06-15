@@ -7,7 +7,7 @@ import { ADS_WF_KEYS } from '../../shared/ads-wf-meta';
 import { ALL_PARAM_KEYS, PARAM_KEYS } from '../../shared/params';
 import { validateRawValue } from '../../shared/schemas';
 import { HttpError } from './firebase';
-import { discoverTriggerKeys, isManagedKey } from './managed-keys';
+import { discoverNativeAdKeys, discoverTriggerKeys, isManagedKey } from './managed-keys';
 
 export type ParamSummary = {
   exists: boolean;
@@ -68,6 +68,15 @@ export function extractAdsWf(
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
   for (const key of ADS_WF_KEYS) out[key] = summarize(template, key);
+  return out;
+}
+
+// Summarize every control_native_* (inline native ad) param discovered on the template.
+export function extractNativeAds(
+  template: RemoteConfigTemplate,
+): Record<string, ParamSummary> {
+  const out: Record<string, ParamSummary> = {};
+  for (const key of discoverNativeAdKeys(template)) out[key] = summarize(template, key);
   return out;
 }
 

@@ -19,6 +19,7 @@ export type TemplateResponse = {
   params: Record<string, ParamSummary>;
   triggers: Record<string, ParamSummary>;
   adsWf: Record<string, ParamSummary>;
+  nativeAds: Record<string, ParamSummary>;
 };
 
 export type FieldError = { param: string; message: string };

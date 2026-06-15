@@ -3,6 +3,7 @@ import {
   HistoryOutlined,
   PartitionOutlined,
   PictureOutlined,
+  ProfileOutlined,
   ReloadOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
@@ -10,16 +11,18 @@ import { Button, Layout, Menu, Result, Space, Spin, Tag, Typography } from 'antd
 import { useState } from 'react';
 import { VersionDrawer } from './components/version-drawer';
 import { AdsWfPage } from './pages/ads-wf-page';
+import { InlineNativePage } from './pages/inline-native-page';
 import { NativeFullscreenPage } from './pages/native-fullscreen-page';
 import { TriggersPage } from './pages/triggers-page';
 import { useTemplate } from './use-template';
 
-type Section = 'native' | 'triggers' | 'ads-wf';
+type Section = 'native' | 'native-ads' | 'triggers' | 'ads-wf';
 
 const NAV = [
   { key: 'ads-wf', icon: <PartitionOutlined />, label: 'Ads Waterfall' },
   { key: 'triggers', icon: <ThunderboltOutlined />, label: 'Ad Triggers' },
   { key: 'native', icon: <PictureOutlined />, label: 'Native Fullscreen Ad' },
+  { key: 'native-ads', icon: <ProfileOutlined />, label: 'Inline Native Ad' },
 ];
 
 export default function RemoteConfigApp() {
@@ -101,6 +104,8 @@ export default function RemoteConfigApp() {
             <Spin size="large" style={{ display: 'block', margin: '120px auto' }} />
           ) : section === 'native' ? (
             <NativeFullscreenPage params={t.params} etag={t.etag} reload={t.reload} />
+          ) : section === 'native-ads' ? (
+            <InlineNativePage nativeAds={t.nativeAds} etag={t.etag} reload={t.reload} />
           ) : section === 'triggers' ? (
             <TriggersPage triggers={t.triggers} adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
           ) : (
