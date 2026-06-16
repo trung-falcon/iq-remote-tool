@@ -23,21 +23,24 @@ export type Drafts = {
 };
 
 const ZERO_CORNERS = { TR: 0, TL: 0, BR: 0, BL: 0 };
+const ZERO_MODES = { fakeX: 0, openStore: 0, countdown: 0 };
 
 // Materialize modeWeights/positionWeights while preserving every other field
 // (preClose.mode + unknown keys). Absent positionWeights → all-zero (≡ native TR).
 function normalizeCloseConfig(raw: Record<string, any>): CloseConfig {
   const pre = raw.preClose ?? {};
   const close = raw.close ?? {};
-  return {
+  const baseModeWeights = pre.modeWeights
+    ? { ...ZERO_MODES, ...pre.modeWeights }
+    : { ...DEFAULT_MODE_WEIGHTS };
+
+  const out: Record<string, any> = {
     ...raw,
     enabled: raw.enabled !== false,
     preClose: {
       ...pre,
       delaySeconds: typeof pre.delaySeconds === 'number' ? pre.delaySeconds : 0,
-      modeWeights: pre.modeWeights
-        ? { fakeX: 0, openStore: 0, countdown: 0, ...pre.modeWeights }
-        : { ...DEFAULT_MODE_WEIGHTS },
+      modeWeights: baseModeWeights,
       positionWeights: { ...ZERO_CORNERS, ...(pre.positionWeights ?? {}) },
     },
     close: {
@@ -45,7 +48,32 @@ function normalizeCloseConfig(raw: Record<string, any>): CloseConfig {
       delaySeconds: typeof close.delaySeconds === 'number' ? close.delaySeconds : 0,
       positionWeights: { ...ZERO_CORNERS, ...(close.positionWeights ?? {}) },
     },
-  } as CloseConfig;
+  };
+
+  // Per-content-type overrides: materialize each present override's modeWeights so
+  // the editor has concrete numbers (seed from base when absent). Other override
+  // fields are preserved via spread.
+  if (raw.overrides && typeof raw.overrides === 'object') {
+    const ov: Record<string, any> = { ...raw.overrides };
+    for (const type of Object.keys(ov)) {
+      const o = ov[type];
+      if (o && typeof o === 'object') {
+        const opre = o.preClose ?? {};
+        ov[type] = {
+          ...o,
+          preClose: {
+            ...opre,
+            modeWeights: opre.modeWeights
+              ? { ...ZERO_MODES, ...opre.modeWeights }
+              : { ...baseModeWeights },
+          },
+        };
+      }
+    }
+    out.overrides = ov;
+  }
+
+  return out as CloseConfig;
 }
 
 // Canonical 6 layouts (in order, 0 when missing) + any extra/non-canonical keys.

@@ -47,6 +47,22 @@ export const CORNER_LABELS: Record<string, string> = {
 
 export const DEFAULT_MODE_WEIGHTS = { fakeX: 0, openStore: 0, countdown: 100 };
 
+// Native ad content type (close_config.overrides). The app (showNativeAdActivity.ts
+// getNativeAdContentType) classifies each ad: 'appInstall' when it has store/price/
+// starRating, else 'content'. close_config.overrides[type] is deep-merged onto the
+// base close flow for that type.
+export const NATIVE_CONTENT_TYPES = ['content', 'appInstall'] as const;
+export type NativeAdContentType = (typeof NATIVE_CONTENT_TYPES)[number];
+
+export const CONTENT_TYPE_LABELS: Record<NativeAdContentType, string> = {
+  content: 'Content (nội dung / tin tức)',
+  appInstall: 'App Install (quảng cáo cài app)',
+};
+export const CONTENT_TYPE_HINTS: Record<NativeAdContentType, string> = {
+  content: 'Ad nội dung — không có store / giá / rating. Thường tương tác (CTR) cao hơn.',
+  appInstall: 'Ad cài app — có store / giá / số sao đánh giá.',
+};
+
 // App-side defaults — used to initialize drafts when a param is missing from the
 // template or its current value fails to parse. Mirrors the real config shape
 // (close_config carries preClose.mode + positionWeights, close.positionWeights).
@@ -61,6 +77,10 @@ export const APP_DEFAULTS = {
       positionWeights: { TR: 50, TL: 50, BR: 0, BL: 0 },
     },
     close: { delaySeconds: 3, positionWeights: { TR: 50, TL: 50, BR: 0, BL: 0 } },
+    overrides: {
+      content: { preClose: { modeWeights: { fakeX: 40, openStore: 30, countdown: 30 } } },
+      appInstall: { preClose: { modeWeights: { fakeX: 0, openStore: 0, countdown: 100 } } },
+    },
   },
   layoutWeights: {
     default: {

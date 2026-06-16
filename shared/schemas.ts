@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ADS_WF_KEYS } from './ads-wf-meta';
 import { LANGUAGE_SCREEN_KEY, ONBOARD_SCREEN_RE } from './screen-native-meta';
-import { PARAM_KEYS } from './params';
+import { NATIVE_CONTENT_TYPES, PARAM_KEYS, type NativeAdContentType } from './params';
 import { TRIGGER_PREFIX } from './trigger-meta';
 
 const weight = z.number().min(0, 'Trọng số phải >= 0');
@@ -13,6 +13,33 @@ const cornerWeightsSchema = z
   .partial()
   .passthrough();
 
+const modeWeightsSchema = z
+  .object({ fakeX: weight, openStore: weight, countdown: weight })
+  .partial()
+  .passthrough();
+
+// Per-content-type override (close_config.overrides.content / .appInstall): a
+// PARTIAL close flow deep-merged onto the base. Every field optional; passthrough.
+const closeOverrideSchema = z
+  .object({
+    preClose: z
+      .object({
+        delaySeconds: weight.optional(),
+        modeWeights: modeWeightsSchema.optional(),
+        positionWeights: cornerWeightsSchema.optional(),
+      })
+      .passthrough()
+      .optional(),
+    close: z
+      .object({ delaySeconds: weight.optional(), positionWeights: cornerWeightsSchema.optional() })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+const sumModeWeights = (mw?: { fakeX?: number; openStore?: number; countdown?: number }) =>
+  mw ? (mw.fakeX ?? 0) + (mw.openStore ?? 0) + (mw.countdown ?? 0) : 0;
+
 // Preservation-first: every object is .passthrough() so fields the app/native
 // read but this tool doesn't model (e.g. preClose.mode) survive an edit+publish
 // instead of being silently dropped. Only the modeled fields are validated.
@@ -22,11 +49,7 @@ export const closeConfigSchema = z
     preClose: z
       .object({
         delaySeconds: weight,
-        modeWeights: z
-          .object({ fakeX: weight, openStore: weight, countdown: weight })
-          .partial()
-          .passthrough()
-          .optional(),
+        modeWeights: modeWeightsSchema.optional(),
         positionWeights: cornerWeightsSchema.optional(),
       })
       .passthrough(),
@@ -36,17 +59,31 @@ export const closeConfigSchema = z
         positionWeights: cornerWeightsSchema.optional(),
       })
       .passthrough(),
+    overrides: z
+      .object({ content: closeOverrideSchema.optional(), appInstall: closeOverrideSchema.optional() })
+      .partial()
+      .passthrough()
+      .optional(),
   })
   .passthrough()
   .superRefine((cfg, ctx) => {
-    const mw = cfg.preClose.modeWeights;
-    const sum = mw ? (mw.fakeX ?? 0) + (mw.openStore ?? 0) + (mw.countdown ?? 0) : 0;
-    if (cfg.enabled && mw && sum <= 0) {
+    if (cfg.enabled && cfg.preClose.modeWeights && sumModeWeights(cfg.preClose.modeWeights) <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['preClose', 'modeWeights'],
         message: 'Cần ít nhất một mode pre-close có trọng số > 0',
       });
+    }
+    // A present override that zeroes out every mode would silently fall back — flag it.
+    for (const type of NATIVE_CONTENT_TYPES) {
+      const mw = cfg.overrides?.[type]?.preClose?.modeWeights;
+      if (cfg.enabled && mw && sumModeWeights(mw) <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['overrides', type, 'preClose', 'modeWeights'],
+          message: `Override "${type}": cần ít nhất một mode pre-close có trọng số > 0`,
+        });
+      }
     }
   });
 
@@ -54,10 +91,15 @@ export const closeConfigSchema = z
 // materializes modeWeights + positionWeights so editors can assume them present.
 export type ModeWeights = { fakeX: number; openStore: number; countdown: number };
 export type CornerWeights = { TR: number; TL: number; BR: number; BL: number };
+// Editor shape for one content-type override. normalizeCloseConfig materializes
+// preClose.modeWeights; other fields the user set in raw JSON are preserved at
+// runtime (passthrough), mirroring how preClose.mode survives on the base.
+export type CloseOverride = { preClose: { modeWeights: ModeWeights } };
 export type CloseConfig = {
   enabled: boolean;
   preClose: { delaySeconds: number; modeWeights: ModeWeights; positionWeights: CornerWeights };
   close: { delaySeconds: number; positionWeights: CornerWeights };
+  overrides?: Partial<Record<NativeAdContentType, CloseOverride>>;
 };
 
 // Accept ANY layout name — native silently falls back to media_full for names

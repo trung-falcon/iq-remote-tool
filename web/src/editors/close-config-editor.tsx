@@ -1,7 +1,16 @@
 import { CloseCircleOutlined } from '@ant-design/icons';
 import { Alert, Card, Divider, InputNumber, Space, Switch, Typography } from 'antd';
-import { CLOSE_MODE_LABELS, CORNER_LABELS, CORNERS, PARAM_KEYS } from '../../../shared/params';
-import type { CloseConfig } from '../../../shared/schemas';
+import {
+  CLOSE_MODE_LABELS,
+  CONTENT_TYPE_HINTS,
+  CONTENT_TYPE_LABELS,
+  CORNER_LABELS,
+  CORNERS,
+  NATIVE_CONTENT_TYPES,
+  PARAM_KEYS,
+  type NativeAdContentType,
+} from '../../../shared/params';
+import type { CloseConfig, ModeWeights } from '../../../shared/schemas';
 import type { ParamSummary } from '../api';
 import { ParamTags } from '../components/param-tags';
 import { WeightRows } from './weight-rows';
@@ -18,6 +27,27 @@ type Props = {
 
 export function CloseConfigEditor({ value, summary, dirty, error, onChange }: Props) {
   const disabled = !value.enabled;
+  const overrides = value.overrides ?? {};
+
+  // Set (or clear, when modeWeights is null) the override for one content type.
+  // Other fields the override carries are preserved; an empty `overrides` is dropped.
+  const setOverrideWeights = (type: NativeAdContentType, modeWeights: ModeWeights | null) => {
+    const next: Record<string, any> = { ...(value.overrides ?? {}) };
+    if (modeWeights === null) {
+      delete next[type];
+    } else {
+      next[type] = { ...next[type], preClose: { ...next[type]?.preClose, modeWeights } };
+    }
+    onChange({ ...value, overrides: Object.keys(next).length ? next : undefined });
+  };
+
+  const toggleOverride = (type: NativeAdContentType, on: boolean) =>
+    setOverrideWeights(type, on ? { ...value.preClose.modeWeights } : null);
+
+  const setOverrideWeight = (type: NativeAdContentType, key: string, v: number) => {
+    const cur = overrides[type]?.preClose.modeWeights ?? value.preClose.modeWeights;
+    setOverrideWeights(type, { ...cur, [key]: v });
+  };
 
   return (
     <Card
@@ -128,6 +158,44 @@ export function CloseConfigEditor({ value, summary, dirty, error, onChange }: Pr
           })
         }
       />
+
+      <Divider orientation="left" plain style={{ margin: '16px 0 8px' }}>
+        Override theo loại nội dung native (tùy chọn)
+      </Divider>
+      <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginBottom: 8 }}>
+        Ghi đè <Typography.Text code>trọng số mode pre-close</Typography.Text> theo loại nội dung của
+        native ad (deep-merge lên cấu hình gốc ở trên). Bật loại nào thì loại đó dùng trọng số riêng;
+        tắt thì dùng cấu hình gốc. Các field khác của giai đoạn 1/2 vẫn lấy từ cấu hình gốc.
+      </Typography.Paragraph>
+
+      {NATIVE_CONTENT_TYPES.map(type => {
+        const on = !!overrides[type];
+        return (
+          <div key={type} style={{ marginBottom: 12 }}>
+            <Space align="center">
+              <Switch checked={on} disabled={disabled} onChange={v => toggleOverride(type, v)} />
+              <Typography.Text strong={on}>{CONTENT_TYPE_LABELS[type]}</Typography.Text>
+            </Space>
+            <Typography.Paragraph
+              type="secondary"
+              style={{ fontSize: 12, margin: '2px 0 0 46px' }}
+            >
+              {CONTENT_TYPE_HINTS[type]}
+            </Typography.Paragraph>
+            {on && (
+              <div style={{ marginLeft: 46, marginTop: 6 }}>
+                <WeightRows
+                  weights={overrides[type]!.preClose.modeWeights}
+                  order={MODE_ORDER}
+                  labels={CLOSE_MODE_LABELS}
+                  disabled={disabled}
+                  onChange={(key, v) => setOverrideWeight(type, key, v)}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {error && <Alert type="error" showIcon style={{ marginTop: 12 }} message={error} />}
     </Card>
