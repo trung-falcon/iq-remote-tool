@@ -5,6 +5,7 @@ import type { ParamSummary } from '../api';
 import { JsonPreview } from '../components/json-preview';
 import { ParamTags } from '../components/param-tags';
 import { PublishBar } from '../components/publish-bar';
+import { AdaptiveCooldownEditor } from '../editors/ads-wf/adaptive-cooldown-editor';
 import { AdsConfigFields } from '../editors/ads-wf/ads-config-fields';
 import { AdsItemList } from '../editors/ads-wf/ads-item-list';
 import { useAdsWfDrafts } from '../hooks/use-ads-wf-drafts';
@@ -50,6 +51,7 @@ export function AdsWfPage({ adsWf, etag, reload }: Props) {
       <Row gutter={16}>
         <Col xs={24} xl={15}>
           <AdsConfigFields value={a.draft} onChange={a.update} />
+          <AdaptiveCooldownEditor value={a.draft} onChange={a.update} />
           <AdsItemList value={a.draft} onChange={a.update} />
         </Col>
         <Col xs={24} xl={9}>

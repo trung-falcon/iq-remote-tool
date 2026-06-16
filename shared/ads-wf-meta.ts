@@ -30,6 +30,13 @@ export type AdsItem = {
   maxTimeReload?: number;
 };
 
+// Adaptive ad cooldown (ads_wf_config.adaptiveCooldown). Mirrors the app
+// (brain-training/src/new-ads/index.ts:126-131, adaptive-cooldown.ts): cooldown
+// shrinks as the lifetime count of mandatory ads shown grows. The app picks the
+// highest tier whose minAdsShown <= totalAdsShown; disabled/empty → coolDownTime.
+export type CooldownTier = { minAdsShown: number; cooldownMs: number };
+export type AdaptiveCooldownConfig = { enabled: boolean; tiers: CooldownTier[] };
+
 export type AdsRemoteConfig = {
   ids: AdsItem[];
   x: number;
@@ -41,6 +48,18 @@ export type AdsRemoteConfig = {
   continueReloadAfter: number;
   enableAdmob: boolean;
   enableMax: boolean;
+  adaptiveCooldown?: AdaptiveCooldownConfig;
+};
+
+// Starter tiers when the user first enables adaptive cooldown — illustrates
+// "more lifetime ads → shorter cooldown". Real values are tuned in the editor.
+export const DEFAULT_ADAPTIVE_COOLDOWN: AdaptiveCooldownConfig = {
+  enabled: true,
+  tiers: [
+    { minAdsShown: 0, cooldownMs: 60000 },
+    { minAdsShown: 20, cooldownMs: 45000 },
+    { minAdsShown: 50, cooldownMs: 30000 },
+  ],
 };
 
 // Scalar (non-ids) top-level fields + labels/hints for the timing form.

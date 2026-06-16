@@ -197,6 +197,33 @@ const adsItemSchema = z
   .passthrough();
 
 const num = z.number().min(0).optional();
+
+// Adaptive cooldown tiers (ads_wf_config.adaptiveCooldown). Lenient/passthrough to
+// match the app's defensive reads; the app itself drops tiers with non-finite
+// minAdsShown or cooldownMs <= 0, so we flag those instead of hard-failing on shape.
+const cooldownTierSchema = z
+  .object({
+    minAdsShown: z.number().min(0, 'minAdsShown phải >= 0'),
+    cooldownMs: z.number().min(0, 'cooldownMs phải >= 0'),
+  })
+  .passthrough();
+
+const adaptiveCooldownSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    tiers: cooldownTierSchema.array().optional(),
+  })
+  .passthrough()
+  .superRefine((ac, ctx) => {
+    if (ac.enabled && !ac.tiers?.some(t => t.cooldownMs > 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['tiers'],
+        message: 'Bật adaptive cooldown nhưng chưa có tier nào có cooldownMs > 0',
+      });
+    }
+  });
+
 export const adsWfSchema = z
   .object({
     ids: adsItemSchema.array().optional(),
@@ -209,6 +236,7 @@ export const adsWfSchema = z
     continueReloadAfter: num,
     enableAdmob: z.boolean().optional(),
     enableMax: z.boolean().optional(),
+    adaptiveCooldown: adaptiveCooldownSchema.optional(),
   })
   .passthrough();
 

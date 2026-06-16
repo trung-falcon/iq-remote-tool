@@ -35,6 +35,10 @@ function serialize(draft: AdsRemoteConfig, raw: string): string {
     else if ((draft as any)[f] !== (DEFAULT_ADS_CONFIG as any)[f]) out[f] = (draft as any)[f];
   }
   out.ids = draft.ids;
+  // adaptiveCooldown is a nested object the editor owns: write the draft's value,
+  // or drop the key entirely when cleared (≡ app falls back to coolDownTime).
+  if (draft.adaptiveCooldown) out.adaptiveCooldown = draft.adaptiveCooldown;
+  else delete out.adaptiveCooldown;
   return JSON.stringify(out);
 }
 
