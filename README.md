@@ -27,6 +27,23 @@ yarn dev
 - API server: http://localhost:4000
 - Web UI: http://localhost:5173 (mở trình duyệt vào đây)
 
+## Mật khẩu truy cập
+
+Tool được bảo vệ bằng **một mật khẩu dùng chung**. Khi mở web, nhập mật khẩu là dùng được — gửi mật khẩu cho ai cần dùng là xong.
+
+- Mật khẩu mặc định: `Falcon@IQ2026`
+- Đổi mật khẩu khi host: đặt biến môi trường `RC_PASSWORD` trước khi chạy, ví dụ:
+
+```bash
+RC_PASSWORD='matkhau-cua-ban' yarn dev
+```
+
+> Mật khẩu này cho phép cả đọc lẫn **publish** Remote Config production — coi như deploy key, chỉ chia sẻ cho người được phép.
+
+### Host lên server công ty
+
+`yarn dev` đã lắng nghe trên mọi network interface (`HOST=0.0.0.0`, web `host: true`), nên chỉ cần chạy trên server rồi truy cập `http://<ip-server>:5173`. Người dùng nhập mật khẩu là vào được.
+
 ## Tính năng
 
 - Form editor trực quan (slider trọng số, hiển thị % chuẩn hóa, toggle, number input)

@@ -3,6 +3,10 @@ import { HttpError } from './firebase';
 import { routes } from './routes';
 
 const PORT = 4000;
+// Bind to all interfaces by default so the tool can be hosted on a company server;
+// override with HOST=127.0.0.1 to keep it local-only. Access is gated by the
+// shared password (RC_PASSWORD), so exposing the port still requires the password.
+const HOST = process.env.HOST || '0.0.0.0';
 
 const app = express();
 app.use(express.json());
@@ -35,8 +39,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
   res.status(500).json({ error: message });
 });
 
-// Localhost only — this API has no auth and can publish production Remote Config.
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`[api] listening on http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`[api] listening on http://${HOST}:${PORT}`);
   console.log('[api] web UI (vite): http://localhost:5173');
 });

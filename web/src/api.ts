@@ -1,5 +1,7 @@
 // Typed fetch wrappers for the tool's API (proxied by Vite to localhost:4000).
 
+import { clearPassword, getPassword } from './auth';
+
 export type ParamSummary = {
   exists: boolean;
   defaultValue: string;
@@ -38,9 +40,13 @@ export class ApiError extends Error {
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const password = getPassword();
+  if (password) headers.Authorization = `Bearer ${password}`;
+
   let res: Response;
   try {
-    res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...init });
+    res = await fetch(url, { ...init, headers: { ...headers, ...(init?.headers as object) } });
   } catch {
     // fetch only rejects on network-level failures (server down, proxy reset).
     throw new ApiError(0, {
@@ -48,13 +54,25 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
     });
   }
   const payload = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-  if (!res.ok) throw new ApiError(res.status, payload);
+  if (!res.ok) {
+    // Stored password is missing/stale on a protected route — drop it and let the
+    // login screen take over (the /login call handles its own 401 below).
+    if (res.status === 401 && !url.endsWith('/login')) clearPassword();
+    throw new ApiError(res.status, payload);
+  }
   return payload as T;
 }
 
 export type Changes = Record<string, string>;
 
 export const api = {
+  login: (password: string) =>
+    request<{ ok: true }>('/api/login', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${password}` },
+      body: JSON.stringify({ password }),
+    }),
+
   getTemplate: () => request<TemplateResponse>('/api/template'),
 
   validate: (changes: Changes, deletes: string[] = []) =>

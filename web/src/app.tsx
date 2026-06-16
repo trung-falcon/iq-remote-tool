@@ -1,6 +1,7 @@
 import {
   ControlOutlined,
   HistoryOutlined,
+  LogoutOutlined,
   PartitionOutlined,
   PictureOutlined,
   ProfileOutlined,
@@ -9,6 +10,7 @@ import {
 } from '@ant-design/icons';
 import { Button, Layout, Menu, Result, Space, Spin, Tag, Typography } from 'antd';
 import { useState } from 'react';
+import { clearPassword } from './auth';
 import { VersionDrawer } from './components/version-drawer';
 import { AdsWfPage } from './pages/ads-wf-page';
 import { NativeFullscreenPage } from './pages/native-fullscreen-page';
@@ -67,6 +69,9 @@ export default function RemoteConfigApp() {
           </Button>
           <Button icon={<HistoryOutlined />} onClick={() => setHistoryOpen(true)}>
             Lịch sử
+          </Button>
+          <Button icon={<LogoutOutlined />} onClick={() => clearPassword()}>
+            Đăng xuất
           </Button>
         </Space>
       </Layout.Header>

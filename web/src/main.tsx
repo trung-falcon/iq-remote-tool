@@ -2,6 +2,7 @@ import { App as AntApp, ConfigProvider, theme } from 'antd';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import RemoteConfigApp from './app';
+import { LoginGate } from './login-gate';
 
 const FONT_STACK =
   "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
@@ -38,7 +39,9 @@ createRoot(document.getElementById('root')!).render(
       }}
     >
       <AntApp>
-        <RemoteConfigApp />
+        <LoginGate>
+          <RemoteConfigApp />
+        </LoginGate>
       </AntApp>
     </ConfigProvider>
   </React.StrictMode>,

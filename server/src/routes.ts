@@ -1,5 +1,6 @@
 import { Router, type Request, type Response, type NextFunction } from 'express';
 import type { Version } from 'firebase-admin/remote-config';
+import { ACCESS_PASSWORD, requireAuth } from './auth';
 import { HttpError, rc } from './firebase';
 import {
   applyChanges,
@@ -56,6 +57,20 @@ function ensureNonEmpty(changes: Changes, deletes: string[]): void {
 }
 
 export const routes = Router();
+
+// Public: exchange the shared password for access. The client stores the password
+// and replays it on every request, so this is just an up-front check + nicer error.
+routes.post('/login', (req, res) => {
+  const { password } = (req.body ?? {}) as { password?: unknown };
+  if (typeof password === 'string' && password === ACCESS_PASSWORD) {
+    res.json({ ok: true });
+    return;
+  }
+  res.status(401).json({ error: 'wrong-password' });
+});
+
+// Everything below requires the shared password.
+routes.use(requireAuth);
 
 routes.get(
   '/template',
