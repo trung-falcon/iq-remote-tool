@@ -102,19 +102,28 @@ export default function RemoteConfigApp() {
             />
           ) : t.loading && !t.etag ? (
             <Spin size="large" style={{ display: 'block', margin: '120px auto' }} />
-          ) : section === 'native' ? (
-            <NativeFullscreenPage params={t.params} etag={t.etag} reload={t.reload} />
-          ) : section === 'screens' ? (
-            <ScreenNativePage
-              screens={t.screens}
-              obsoleteNative={t.obsoleteNative}
-              etag={t.etag}
-              reload={t.reload}
-            />
-          ) : section === 'triggers' ? (
-            <TriggersPage triggers={t.triggers} adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
           ) : (
-            <AdsWfPage adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
+            // Keep every section mounted and just toggle visibility, so unpublished
+            // drafts survive when the user switches between sections.
+            <>
+              <div style={{ display: section === 'ads-wf' ? 'block' : 'none' }}>
+                <AdsWfPage adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
+              </div>
+              <div style={{ display: section === 'triggers' ? 'block' : 'none' }}>
+                <TriggersPage triggers={t.triggers} adsWf={t.adsWf} etag={t.etag} reload={t.reload} />
+              </div>
+              <div style={{ display: section === 'native' ? 'block' : 'none' }}>
+                <NativeFullscreenPage params={t.params} etag={t.etag} reload={t.reload} />
+              </div>
+              <div style={{ display: section === 'screens' ? 'block' : 'none' }}>
+                <ScreenNativePage
+                  screens={t.screens}
+                  obsoleteNative={t.obsoleteNative}
+                  etag={t.etag}
+                  reload={t.reload}
+                />
+              </div>
+            </>
           )}
         </Layout.Content>
       </Layout>

@@ -53,12 +53,33 @@ export function usePublishFlow({ etag, changes, getSummary, reload, deletes = []
     if (!etag) return;
     setPublishing(true);
     try {
-      const r = await api.publish(etag, changes, deletes);
+      // Firebase Remote Config has a single template/etag, so publishes are always
+      // serialized — concurrent tabs can't write at the same instant, the loser
+      // gets a 409. Our publish only merges the keys in `changes`/`deletes` into the
+      // latest template, so on conflict we just re-fetch the fresh etag and retry.
+      // Looping (not a single retry) lets many tabs publishing at once each succeed
+      // in turn (last-write-wins per key); other keys edited elsewhere are kept.
+      const MAX_ATTEMPTS = 5;
+      let r: Awaited<ReturnType<typeof api.publish>> | undefined;
+      let currentEtag = etag;
+      for (let attempt = 1; ; attempt++) {
+        try {
+          r = await api.publish(currentEtag, changes, deletes);
+          break;
+        } catch (e) {
+          if (e instanceof ApiError && e.isEtagConflict && attempt < MAX_ATTEMPTS) {
+            currentEtag = (await api.getTemplate()).etag;
+            continue;
+          }
+          throw e;
+        }
+      }
       setDiffOpen(false);
-      message.success(`Đã publish thành công — version ${r.versionNumber ?? '?'}`);
+      message.success(`Đã publish thành công — version ${r?.versionNumber ?? '?'}`);
       await reload();
     } catch (e) {
       if (e instanceof ApiError && e.isEtagConflict) {
+        // Two publishes raced even after the retry — fall back to the manual prompt.
         setDiffOpen(false);
         modal.confirm({
           title: 'Template đã bị thay đổi từ nơi khác',
