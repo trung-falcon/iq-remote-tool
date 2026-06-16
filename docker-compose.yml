@@ -1,0 +1,15 @@
+services:
+  iq-remote-tool:
+    build: .
+    image: iq-remote-tool
+    container_name: iq-remote-tool
+    ports:
+      - "4000:4000"
+    environment:
+      # Shared access password. Override here or in a .env file next to this compose
+      # file (RC_PASSWORD=...). Falls back to the built-in default if unset.
+      RC_PASSWORD: "${RC_PASSWORD:-Falcon@IQ2026}"
+    volumes:
+      # Firebase service account key — provide it on the host (gitignored, secret).
+      - ./service-account.json:/app/service-account.json:ro
+    restart: unless-stopped

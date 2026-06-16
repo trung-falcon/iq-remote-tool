@@ -40,9 +40,45 @@ RC_PASSWORD='matkhau-cua-ban' yarn dev
 
 > Mật khẩu này cho phép cả đọc lẫn **publish** Remote Config production — coi như deploy key, chỉ chia sẻ cho người được phép.
 
-### Host lên server công ty
+## Host lên server công ty (Docker)
 
-`yarn dev` đã lắng nghe trên mọi network interface (`HOST=0.0.0.0`, web `host: true`), nên chỉ cần chạy trên server rồi truy cập `http://<ip-server>:5173`. Người dùng nhập mật khẩu là vào được.
+Cách khuyến nghị để chạy production: dùng Docker. Web được build sẵn thành file tĩnh và **chính server Express phục vụ luôn cả UI lẫn `/api` trên cùng 1 cổng `4000`** — không cần Vite, không cần proxy.
+
+**Chuẩn bị trên server:**
+
+1. Copy 2 file vào cùng thư mục với `docker-compose.yml`:
+   - `service-account.json` (key Firebase — secret, đã gitignore, KHÔNG nằm trong image)
+   - `.env` (tùy chọn) để đặt mật khẩu:
+     ```
+     RC_PASSWORD=matkhau-cua-ban
+     ```
+
+2. Build & chạy:
+
+```bash
+docker compose up -d --build
+```
+
+3. Truy cập: `http://<ip-server>:4000` — nhập mật khẩu là dùng được.
+
+**Lệnh hữu ích:**
+
+| Lệnh | Mô tả |
+|---|---|
+| `docker compose up -d --build` | Build image + chạy nền |
+| `docker compose logs -f` | Xem log |
+| `docker compose down` | Dừng & xóa container |
+| `docker compose restart` | Restart sau khi đổi `.env` |
+
+> Đổi mật khẩu: sửa `RC_PASSWORD` trong `.env` rồi `docker compose up -d` lại. Mật khẩu mặc định nếu không đặt: `Falcon@IQ2026`.
+
+**Không dùng Docker?** Có thể chạy thẳng:
+
+```bash
+yarn install
+yarn build                       # build web tĩnh → web/dist
+RC_PASSWORD='...' yarn start      # server phục vụ UI + API tại http://localhost:4000
+```
 
 ## Tính năng
 

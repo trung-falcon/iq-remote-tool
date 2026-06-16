@@ -1,0 +1,14 @@
+node_modules
+web/dist
+dist
+.git
+.gitignore
+*.log
+.DS_Store
+.claude
+
+# Secrets / local env — provided at runtime, never copied into the image
+service-account.json
+*.serviceaccount.json
+.env
+.env.*
