@@ -1,5 +1,5 @@
 import { CodeOutlined } from '@ant-design/icons';
-import { Alert, Col, Row, Spin, Typography } from 'antd';
+import { Alert, Col, Row, Segmented, Space, Spin, Typography } from 'antd';
 import { PARAM_KEYS } from '../../../shared/params';
 import type { ParamSummary } from '../api';
 import { JsonPreview } from '../components/json-preview';
@@ -20,8 +20,18 @@ export function NativeFullscreenPage({ params, etag, reload }: Props) {
   const n = useNativeDrafts(params);
   const flow = usePublishFlow({ etag, changes: n.changes, getSummary: k => params[k], reload });
 
-  if (!n.drafts) return <Spin />;
   const hasErrors = Object.keys(n.errors).length > 0;
+
+  const variantKeys = (baseKey: string) => [baseKey, `android_${baseKey}`, `ios_${baseKey}`];
+
+  const variantOptions = (keys: string[]) =>
+    keys.map(key => ({
+      label: key.startsWith('android_') ? 'Android' : key.startsWith('ios_') ? 'iOS' : 'Chung',
+      value: key,
+    }));
+
+  const variantLabel = (key: string) =>
+    key.startsWith('android_') ? 'Android' : key.startsWith('ios_') ? 'iOS' : 'Chung (fallback)';
 
   return (
     <div>
@@ -34,27 +44,71 @@ export function NativeFullscreenPage({ params, etag, reload }: Props) {
       <Row gutter={16}>
         <Col xs={24} lg={14}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <TimeoutEditor
-              value={n.drafts.timeout}
-              summary={params[PARAM_KEYS.timeout]}
-              dirty={n.dirtyKeys.includes(PARAM_KEYS.timeout)}
-              error={n.errors[PARAM_KEYS.timeout]}
-              onChange={n.updateTimeout}
-            />
-            <CloseConfigEditor
-              value={n.drafts.closeConfig}
-              summary={params[PARAM_KEYS.closeConfig]}
-              dirty={n.dirtyKeys.includes(PARAM_KEYS.closeConfig)}
-              error={n.errors[PARAM_KEYS.closeConfig]}
-              onChange={n.updateCloseConfig}
-            />
-            <LayoutWeightsEditor
-              value={n.drafts.layoutWeights}
-              summary={params[PARAM_KEYS.layoutWeights]}
-              dirty={n.dirtyKeys.includes(PARAM_KEYS.layoutWeights)}
-              error={n.errors[PARAM_KEYS.layoutWeights]}
-              onChange={n.updateLayoutWeights}
-            />
+            <div>
+              <Space wrap style={{ marginBottom: 8 }}>
+                <Segmented
+                  value={n.timeout.selected}
+                  options={variantOptions(variantKeys(PARAM_KEYS.timeout)).map(opt => ({
+                    ...opt,
+                    label: n.timeout.variantExists(opt.value) ? opt.label : `${opt.label} · tạo mới`,
+                  }))}
+                  onChange={v => n.timeout.selectOrCreate(v as string)}
+                />
+                <Typography.Text code>{variantLabel(n.timeout.selected)}</Typography.Text>
+                <Typography.Text code>{n.timeout.selected}</Typography.Text>
+              </Space>
+              <TimeoutEditor
+                value={n.timeout.draft}
+                summary={n.timeout.summaryFor(n.timeout.selected)}
+                dirty={n.timeout.isDirty(n.timeout.selected)}
+                error={n.errors[n.timeout.selected]}
+                onChange={n.updateTimeout}
+              />
+            </div>
+
+            <div>
+              <Space wrap style={{ marginBottom: 8 }}>
+                <Segmented
+                  value={n.closeConfig.selected}
+                  options={variantOptions(variantKeys(PARAM_KEYS.closeConfig)).map(opt => ({
+                    ...opt,
+                    label: n.closeConfig.variantExists(opt.value) ? opt.label : `${opt.label} · tạo mới`,
+                  }))}
+                  onChange={v => n.closeConfig.selectOrCreate(v as string)}
+                />
+                <Typography.Text code>{variantLabel(n.closeConfig.selected)}</Typography.Text>
+                <Typography.Text code>{n.closeConfig.selected}</Typography.Text>
+              </Space>
+              <CloseConfigEditor
+                value={n.closeConfig.draft}
+                summary={n.closeConfig.summaryFor(n.closeConfig.selected)}
+                dirty={n.closeConfig.isDirty(n.closeConfig.selected)}
+                error={n.errors[n.closeConfig.selected]}
+                onChange={n.updateCloseConfig}
+              />
+            </div>
+
+            <div>
+              <Space wrap style={{ marginBottom: 8 }}>
+                <Segmented
+                  value={n.layoutWeights.selected}
+                  options={variantOptions(variantKeys(PARAM_KEYS.layoutWeights)).map(opt => ({
+                    ...opt,
+                    label: n.layoutWeights.variantExists(opt.value) ? opt.label : `${opt.label} · tạo mới`,
+                  }))}
+                  onChange={v => n.layoutWeights.selectOrCreate(v as string)}
+                />
+                <Typography.Text code>{variantLabel(n.layoutWeights.selected)}</Typography.Text>
+                <Typography.Text code>{n.layoutWeights.selected}</Typography.Text>
+              </Space>
+              <LayoutWeightsEditor
+                value={n.layoutWeights.draft}
+                summary={n.layoutWeights.summaryFor(n.layoutWeights.selected)}
+                dirty={n.layoutWeights.isDirty(n.layoutWeights.selected)}
+                error={n.errors[n.layoutWeights.selected]}
+                onChange={n.updateLayoutWeights}
+              />
+            </div>
           </div>
         </Col>
         <Col xs={24} lg={10}>
@@ -65,9 +119,9 @@ export function NativeFullscreenPage({ params, etag, reload }: Props) {
               (sẽ publish)
             </Typography.Text>
           </Typography.Title>
-          <JsonPreview title={PARAM_KEYS.timeout} value={n.drafts.timeout} dirty={n.dirtyKeys.includes(PARAM_KEYS.timeout)} />
-          <JsonPreview title={PARAM_KEYS.closeConfig} value={n.drafts.closeConfig} dirty={n.dirtyKeys.includes(PARAM_KEYS.closeConfig)} />
-          <JsonPreview title={PARAM_KEYS.layoutWeights} value={n.drafts.layoutWeights} dirty={n.dirtyKeys.includes(PARAM_KEYS.layoutWeights)} />
+          <JsonPreview title={n.timeout.selected} value={n.timeout.draft} dirty={n.timeout.isDirty(n.timeout.selected)} />
+          <JsonPreview title={n.closeConfig.selected} value={n.closeConfig.draft} dirty={n.closeConfig.isDirty(n.closeConfig.selected)} />
+          <JsonPreview title={n.layoutWeights.selected} value={n.layoutWeights.draft} dirty={n.layoutWeights.isDirty(n.layoutWeights.selected)} />
         </Col>
       </Row>
     </div>

@@ -4,7 +4,7 @@ import type {
   RemoteConfigTemplate,
 } from 'firebase-admin/remote-config';
 import { ADS_WF_KEYS } from '../../shared/ads-wf-meta';
-import { ALL_PARAM_KEYS, PARAM_KEYS } from '../../shared/params';
+import { ALL_PARAM_KEYS, PARAM_KEYS, stripPlatformPrefix } from '../../shared/params';
 import { validateRawValue } from '../../shared/schemas';
 import { LANGUAGE_SCREEN_KEY } from '../../shared/screen-native-meta';
 import { HttpError } from './firebase';
@@ -50,12 +50,26 @@ function summarize(template: RemoteConfigTemplate, key: string): ParamSummary {
   };
 }
 
+function collectManagedKeys(template: RemoteConfigTemplate, predicate: (baseKey: string) => boolean): string[] {
+  const keys = new Set<string>();
+  const collect = (params?: Record<string, unknown>) => {
+    for (const key of Object.keys(params ?? {})) {
+      if (predicate(stripPlatformPrefix(key))) keys.add(key);
+    }
+  };
+  collect(template.parameters);
+  for (const group of Object.values(template.parameterGroups ?? {})) collect(group.parameters);
+  return [...keys].sort();
+}
+
 // Summarize the 3 native fullscreen params.
 export function extractParams(
   template: RemoteConfigTemplate,
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
-  for (const key of ALL_PARAM_KEYS) out[key] = summarize(template, key);
+  for (const key of collectManagedKeys(template, baseKey => (ALL_PARAM_KEYS as string[]).includes(baseKey))) {
+    out[key] = summarize(template, key);
+  }
   return out;
 }
 

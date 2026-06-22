@@ -9,6 +9,17 @@ export const PARAM_KEYS = {
   layoutWeights: 'fullscreen_native_layout_weights',
 } as const;
 
+export const PLATFORM_PREFIXES = ['android_', 'ios_'] as const;
+
+export const stripPlatformPrefix = (key: string): string => {
+  for (const prefix of PLATFORM_PREFIXES) {
+    if (key.startsWith(prefix)) return key.slice(prefix.length);
+  }
+  return key;
+};
+
+export const platformKeyFor = (platform: 'android' | 'ios', key: string): string => `${platform}_${key}`;
+
 export type ParamKey = (typeof PARAM_KEYS)[keyof typeof PARAM_KEYS];
 
 export const ALL_PARAM_KEYS: ParamKey[] = Object.values(PARAM_KEYS);

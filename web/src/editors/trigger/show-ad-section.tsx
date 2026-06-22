@@ -76,7 +76,7 @@ export function ShowAdSection({
   const set = (patch: Partial<ShowAd>) => onChange({ ...value, ...patch });
   const aa = value.adAfterAd;
   const setAA = (patch: Partial<NonNullable<ShowAd['adAfterAd']>>) =>
-    set({ adAfterAd: { active: true, adsType: 'native', ...aa, ...patch } });
+    set({ adAfterAd: { adsType: 'native', ...aa, ...patch, active: true } });
 
   return (
     <Card
@@ -130,7 +130,7 @@ export function ShowAdSection({
           <Space>
             <Switch
               checked={!!aa?.active}
-              onChange={on => set({ adAfterAd: on ? { active: true, adsType: 'native', ...aa } : undefined })}
+              onChange={on => set({ adAfterAd: on ? { adsType: 'native', ...aa, active: true } : undefined })}
             />
             <Text>Ad nối tiếp (adAfterAd)</Text>
           </Space>

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ADS_WF_KEYS } from './ads-wf-meta';
 import { LANGUAGE_SCREEN_KEY, ONBOARD_SCREEN_RE } from './screen-native-meta';
-import { NATIVE_CONTENT_TYPES, PARAM_KEYS, type NativeAdContentType } from './params';
+import { NATIVE_CONTENT_TYPES, PARAM_KEYS, stripPlatformPrefix, type NativeAdContentType } from './params';
 import { TRIGGER_PREFIX } from './trigger-meta';
 
 const weight = z.number().min(0, 'Trọng số phải >= 0');
@@ -316,19 +316,20 @@ export function describeError(e: unknown): string {
 // any trigger_*). Returns null when valid, otherwise a human-readable message.
 export function validateRawValue(key: string, raw: string): string | null {
   try {
-    if (key === PARAM_KEYS.timeout) {
+    const baseKey = stripPlatformPrefix(key);
+    if (baseKey === PARAM_KEYS.timeout) {
       const n = Number(raw);
       if (raw.trim() === '' || Number.isNaN(n)) return 'Timeout phải là một số';
       timeoutSchema.parse(n);
       return null;
     }
     const parsed = JSON.parse(raw);
-    if (key === PARAM_KEYS.closeConfig) closeConfigSchema.parse(parsed);
-    else if (key === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
-    else if ((ADS_WF_KEYS as readonly string[]).includes(key)) adsWfSchema.parse(parsed);
-    else if (ONBOARD_SCREEN_RE.test(key)) onboardScreenSchema.parse(parsed);
-    else if (key === LANGUAGE_SCREEN_KEY) languageScreenSchema.parse(parsed);
-    else if (key.startsWith(TRIGGER_PREFIX)) triggerSchema.parse(parsed);
+    if (baseKey === PARAM_KEYS.closeConfig) closeConfigSchema.parse(parsed);
+    else if (baseKey === PARAM_KEYS.layoutWeights) layoutWeightsSchema.parse(parsed);
+    else if ((ADS_WF_KEYS as readonly string[]).includes(baseKey)) adsWfSchema.parse(parsed);
+    else if (ONBOARD_SCREEN_RE.test(baseKey)) onboardScreenSchema.parse(parsed);
+    else if (baseKey === LANGUAGE_SCREEN_KEY) languageScreenSchema.parse(parsed);
+    else if (baseKey.startsWith(TRIGGER_PREFIX)) triggerSchema.parse(parsed);
     return null;
   } catch (e) {
     return describeError(e);
