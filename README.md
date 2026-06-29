@@ -2,13 +2,16 @@
 
 Web UI để chỉnh Firebase Remote Config cho app **brain-training** (project `flab---brain-training`) — không cần viết JSON tay.
 
-**V1:** quản lý phần Native Fullscreen Ad — 3 keys:
+**V1:** quản lý phần Native Fullscreen Ad + InlineAd remote — 5 keys:
 
-| Key | Mô tả |
-|---|---|
-| `fullscreen_native_timeout` | Số giây trước khi hiện nút thoát |
-| `fullscreen_native_close_config` | Flow đóng ad 2 giai đoạn (pre-close mode weights + delays) |
-| `fullscreen_native_layout_weights` | Trọng số chọn layout theo event |
+| Key                                | Mô tả                                                      |
+| ---------------------------------- | ---------------------------------------------------------- |
+| `fullscreen_native_timeout`        | Số giây trước khi hiện nút thoát                           |
+| `fullscreen_native_close_config`   | Flow đóng ad 2 giai đoạn (pre-close mode weights + delays) |
+| `fullscreen_native_layout_weights` | Trọng số chọn layout theo event                            |
+
+| `control_game_footer` | InlineAd cho footer game (banner/native/none + native config) |
+| `control_home_banner` | InlineAd cho tab home (banner/native/none + native config) |
 
 ## Setup
 
@@ -63,12 +66,12 @@ docker compose up -d --build
 
 **Lệnh hữu ích:**
 
-| Lệnh | Mô tả |
-|---|---|
-| `docker compose up -d --build` | Build image + chạy nền |
-| `docker compose logs -f` | Xem log |
-| `docker compose down` | Dừng & xóa container |
-| `docker compose restart` | Restart sau khi đổi `.env` |
+| Lệnh                           | Mô tả                      |
+| ------------------------------ | -------------------------- |
+| `docker compose up -d --build` | Build image + chạy nền     |
+| `docker compose logs -f`       | Xem log                    |
+| `docker compose down`          | Dừng & xóa container       |
+| `docker compose restart`       | Restart sau khi đổi `.env` |
 
 > Đổi mật khẩu: sửa `RC_PASSWORD` trong `.env` rồi `docker compose up -d` lại. Mật khẩu mặc định nếu không đặt: `Falcon@IQ2026`.
 
@@ -92,7 +95,7 @@ RC_PASSWORD='...' yarn start      # server phục vụ UI + API tại http://loc
 
 ## Scripts
 
-| Lệnh | Mô tả |
-|---|---|
-| `yarn dev` | Chạy cả API (4000) + web (5173) |
+| Lệnh             | Mô tả                               |
+| ---------------- | ----------------------------------- |
+| `yarn dev`       | Chạy cả API (4000) + web (5173)     |
 | `yarn typecheck` | Kiểm tra TypeScript cả server + web |

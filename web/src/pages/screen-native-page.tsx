@@ -55,8 +55,8 @@ export function ScreenNativePage({ screens, obsoleteNative, etag, reload }: Prop
 
   return (
     <Row gutter={16}>
-      <Col xs={24} lg={8}>
-        <Card size="small" title="Màn hình" styles={{ body: { padding: 8 } }}>
+      <Col xs={24} lg={6}>
+        <Card size="small" title="Màn hình" styles={{ body: { padding: 6 } }}>
           <List
             size="small"
             dataSource={nd.keys}
@@ -65,14 +65,14 @@ export function ScreenNativePage({ screens, obsoleteNative, etag, reload }: Prop
               <List.Item
                 onClick={() => nd.select(key)}
                 style={{
-                  cursor: 'pointer', padding: '8px 10px', borderRadius: 8,
+                  cursor: 'pointer', padding: '6px 8px', borderRadius: 6,
                   background: nd.selected === key ? 'rgba(59,130,246,0.16)' : undefined,
                 }}
               >
-                <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 4 }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <Typography.Text style={{ fontSize: 13 }}>{labelFor(key)}</Typography.Text>
-                    <div style={{ fontSize: 11, color: '#64748b' }}>
+                    <Typography.Text style={{ fontSize: 12 }}>{labelFor(key)}</Typography.Text>
+                    <div style={{ fontSize: 10, color: '#64748b' }}>
                       <Tag color={screenKindOf(key) === 'language' ? 'purple' : 'geekblue'} bordered={false} style={{ marginInlineEnd: 4 }}>
                         {screenKindOf(key) === 'language' ? 'lang' : 'onboard'}
                       </Tag>
@@ -107,7 +107,7 @@ export function ScreenNativePage({ screens, obsoleteNative, etag, reload }: Prop
         </Card>
       </Col>
 
-      <Col xs={24} lg={16}>
+      <Col xs={24} lg={18}>
         {!sel || !nd.draft ? (
           <Empty description="Chọn một màn bên trái" style={{ marginTop: 80 }} />
         ) : (

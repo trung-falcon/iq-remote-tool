@@ -13,9 +13,45 @@ export type NativeAdLayoutConfig = {
   reverse?: boolean;
   hideTagLine?: boolean;
   callToActionStyle?: 'fill' | 'stroke';
+  showCloseButton?: boolean;
 };
 
 export type NativeAdLayout = { id: number; customLayout: NativeAdLayoutConfig };
+
+// Inline-native auto-refresh (NativeAdConfig.refresh). Replaces the legacy
+// autoRefresh/refreshSeconds pair — InlineNativeAd reads refresh.* only.
+export type NativeAdRefreshConfig = {
+  enabled?: boolean;
+  intervalSeconds?: number; // nhịp swap ad (giây), default 30
+  preloadSeconds?: number; // nạp trước ad mới bao nhiêu giây trước khi swap
+};
+
+type CornerWeights = { TR?: number; TL?: number; BR?: number; BL?: number };
+type ModeWeights = { fakeX?: number; openStore?: number; countdown?: number };
+
+// collapsible.closeFlow — mirrors fullscreen close_config (2 giai đoạn) nhưng
+// nhúng trong nativeAdConfig của inline ad, không có overrides theo content-type.
+export type NativeAdCollapsibleCloseFlow = {
+  enabled?: boolean;
+  preClose?: {
+    delaySeconds?: number;
+    modeWeights?: ModeWeights;
+    positionWeights?: CornerWeights;
+  };
+  close?: {
+    delaySeconds?: number;
+    positionWeights?: CornerWeights;
+  };
+};
+
+// collapsible — banner-style collapse/expand cho inline native (CollapsibleNativeAd).
+export type NativeAdCollapsibleConfig = {
+  enabled?: boolean;
+  startExpanded?: boolean; // tự bung khi mount
+  startExpandedDelay?: number; // ms chờ trước khi tự bung
+  expandRate?: number; // xác suất bung [0..1], default 1
+  closeFlow?: NativeAdCollapsibleCloseFlow;
+};
 
 export type NativeAdConfig = {
   showAds?: boolean;
@@ -23,6 +59,10 @@ export type NativeAdConfig = {
   highEcpm?: boolean;
   layout?: NativeAdLayout[];
   random?: number[];
+  selfLoad?: boolean; // tự request ad trực tiếp, bỏ pool
+  showSkeleton?: boolean; // hiện skeleton khi đang load
+  refresh?: NativeAdRefreshConfig;
+  collapsible?: NativeAdCollapsibleConfig;
 };
 
 // App default (nativeAdConfig.ts DEFAULT_NATIVE_AD_CONFIG) — base for per-screen merges.
@@ -54,4 +94,5 @@ export const CUSTOM_LAYOUT_TOGGLES: { key: keyof NativeAdLayoutConfig; label: st
   { key: 'hideTagLine', label: 'Ẩn tiêu đề', hint: 'Ẩn headline' },
   { key: 'smallFont', label: 'Chữ nhỏ', hint: 'Dùng cỡ chữ nhỏ' },
   { key: 'reverse', label: 'Đảo chiều', hint: 'Đảo thứ tự text/nút' },
+  { key: 'showCloseButton', label: 'Hiện nút đóng', hint: 'Hiện nút X để đóng ad (chỉ layout 3 hỗ trợ)' },
 ];

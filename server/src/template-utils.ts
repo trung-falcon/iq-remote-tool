@@ -2,18 +2,24 @@ import type {
   RemoteConfigParameter,
   RemoteConfigParameterValue,
   RemoteConfigTemplate,
-} from 'firebase-admin/remote-config';
-import { ADS_WF_KEYS } from '../../shared/ads-wf-meta';
-import { ALL_PARAM_KEYS, PARAM_KEYS, stripPlatformPrefix } from '../../shared/params';
-import { validateRawValue } from '../../shared/schemas';
-import { LANGUAGE_SCREEN_KEY } from '../../shared/screen-native-meta';
-import { HttpError } from './firebase';
+} from "firebase-admin/remote-config";
+import { ADS_WF_KEYS } from "../../shared/ads-wf-meta";
+import { INLINE_AD_KEY_LIST } from "../../shared/inline-ad-meta";
+import {
+  ALL_PARAM_KEYS,
+  PARAM_KEYS,
+  stripPlatformPrefix,
+} from "../../shared/params";
+import { validateRawValue } from "../../shared/schemas";
+import { LANGUAGE_SCREEN_KEY } from "../../shared/screen-native-meta";
+import { HttpError } from "./firebase";
 import {
   discoverObsoleteNativeKeys,
+  discoverInlineAdKeys,
   discoverOnboardScreenKeys,
   discoverTriggerKeys,
   isManagedKey,
-} from './managed-keys';
+} from "./managed-keys";
 
 export type ParamSummary = {
   exists: boolean;
@@ -22,7 +28,7 @@ export type ParamSummary = {
 };
 
 function readValue(v: RemoteConfigParameterValue | undefined): string {
-  return v && 'value' in v ? v.value : '';
+  return v && "value" in v ? v.value : "";
 }
 
 // Params can live at the top level OR inside a parameter group (console allows
@@ -46,11 +52,15 @@ function summarize(template: RemoteConfigTemplate, key: string): ParamSummary {
     exists: !!param,
     defaultValue: readValue(param?.defaultValue),
     hasConditionalValues:
-      !!param?.conditionalValues && Object.keys(param.conditionalValues).length > 0,
+      !!param?.conditionalValues &&
+      Object.keys(param.conditionalValues).length > 0,
   };
 }
 
-function collectManagedKeys(template: RemoteConfigTemplate, predicate: (baseKey: string) => boolean): string[] {
+function collectManagedKeys(
+  template: RemoteConfigTemplate,
+  predicate: (baseKey: string) => boolean,
+): string[] {
   const keys = new Set<string>();
   const collect = (params?: Record<string, unknown>) => {
     for (const key of Object.keys(params ?? {})) {
@@ -58,7 +68,8 @@ function collectManagedKeys(template: RemoteConfigTemplate, predicate: (baseKey:
     }
   };
   collect(template.parameters);
-  for (const group of Object.values(template.parameterGroups ?? {})) collect(group.parameters);
+  for (const group of Object.values(template.parameterGroups ?? {}))
+    collect(group.parameters);
   return [...keys].sort();
 }
 
@@ -67,7 +78,9 @@ export function extractParams(
   template: RemoteConfigTemplate,
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
-  for (const key of collectManagedKeys(template, baseKey => (ALL_PARAM_KEYS as string[]).includes(baseKey))) {
+  for (const key of collectManagedKeys(template, (baseKey) =>
+    (ALL_PARAM_KEYS as string[]).includes(baseKey),
+  )) {
     out[key] = summarize(template, key);
   }
   return out;
@@ -78,7 +91,8 @@ export function extractTriggers(
   template: RemoteConfigTemplate,
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
-  for (const key of discoverTriggerKeys(template)) out[key] = summarize(template, key);
+  for (const key of discoverTriggerKeys(template))
+    out[key] = summarize(template, key);
   return out;
 }
 
@@ -97,7 +111,8 @@ export function extractScreens(
   template: RemoteConfigTemplate,
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
-  for (const key of discoverOnboardScreenKeys(template)) out[key] = summarize(template, key);
+  for (const key of discoverOnboardScreenKeys(template))
+    out[key] = summarize(template, key);
   out[LANGUAGE_SCREEN_KEY] = summarize(template, LANGUAGE_SCREEN_KEY);
   return out;
 }
@@ -107,18 +122,38 @@ export function extractObsoleteNative(
   template: RemoteConfigTemplate,
 ): Record<string, ParamSummary> {
   const out: Record<string, ParamSummary> = {};
-  for (const key of discoverObsoleteNativeKeys(template)) out[key] = summarize(template, key);
+  for (const key of discoverObsoleteNativeKeys(template))
+    out[key] = summarize(template, key);
+  return out;
+}
+
+// Summarize the two InlineAd configs (footer + home banner).
+export function extractInlineAds(
+  template: RemoteConfigTemplate,
+): Record<string, ParamSummary> {
+  const out: Record<string, ParamSummary> = {};
+  for (const key of discoverInlineAdKeys(template))
+    out[key] = summarize(template, key);
+  for (const key of INLINE_AD_KEY_LIST) {
+    if (!out[key]) out[key] = summarize(template, key);
+  }
   return out;
 }
 
 export type Changes = Record<string, string>;
 
 // Zod-validate every changed value against its schema. Returns [] when all valid.
-export function validateChanges(changes: Changes): { param: string; message: string }[] {
+export function validateChanges(
+  changes: Changes,
+): { param: string; message: string }[] {
   const errors: { param: string; message: string }[] = [];
   for (const [key, raw] of Object.entries(changes)) {
     if (!isManagedKey(key)) {
-      errors.push({ param: key, message: 'Unknown parameter — tool only manages the fullscreen_native keys and trigger_* keys' });
+      errors.push({
+        param: key,
+        message:
+          "Unknown parameter — tool only manages the remote config keys exposed in the UI",
+      });
       continue;
     }
     const message = validateRawValue(key, raw);
@@ -130,10 +165,16 @@ export function validateChanges(changes: Changes): { param: string; message: str
 // PUBLISH SAFETY CORE: mutate ONLY the defaultValue of the managed keys,
 // in place wherever the param lives (top level or inside a parameter group).
 // Conditions, parameterGroups, other parameters and conditionalValues stay untouched.
-export function applyChanges(template: RemoteConfigTemplate, changes: Changes): void {
+export function applyChanges(
+  template: RemoteConfigTemplate,
+  changes: Changes,
+): void {
   for (const [key, raw] of Object.entries(changes)) {
     if (!isManagedKey(key)) {
-      throw new HttpError(400, `Refusing to modify unmanaged parameter "${key}"`);
+      throw new HttpError(
+        400,
+        `Refusing to modify unmanaged parameter "${key}"`,
+      );
     }
     const existing = findParam(template, key);
     if (existing) {
@@ -141,8 +182,8 @@ export function applyChanges(template: RemoteConfigTemplate, changes: Changes): 
     } else {
       template.parameters[key] = {
         defaultValue: { value: raw },
-        valueType: key === PARAM_KEYS.timeout ? 'NUMBER' : 'JSON',
-        description: 'Managed by iq-remote-tools',
+        valueType: key === PARAM_KEYS.timeout ? "NUMBER" : "JSON",
+        description: "Managed by iq-remote-tools",
       };
     }
   }
@@ -150,10 +191,16 @@ export function applyChanges(template: RemoteConfigTemplate, changes: Changes): 
 
 // Remove managed params entirely — top-level or inside a parameter group.
 // Everything else stays untouched.
-export function applyDeletes(template: RemoteConfigTemplate, deletes: string[]): void {
+export function applyDeletes(
+  template: RemoteConfigTemplate,
+  deletes: string[],
+): void {
   for (const key of deletes) {
     if (!isManagedKey(key)) {
-      throw new HttpError(400, `Refusing to delete unmanaged parameter "${key}"`);
+      throw new HttpError(
+        400,
+        `Refusing to delete unmanaged parameter "${key}"`,
+      );
     }
     if (template.parameters[key]) {
       delete template.parameters[key];

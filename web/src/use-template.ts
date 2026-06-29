@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, type TemplateResponse } from './api';
+import { useCallback, useEffect, useState } from "react";
+import { api, type TemplateResponse } from "./api";
 
 // Low-level provider: fetches the whole template once and exposes its data +
 // reload. Per-section draft logic lives in use-native-drafts / use-trigger-drafts;
@@ -33,6 +33,7 @@ export function useTemplate() {
     params: data?.params ?? {},
     triggers: data?.triggers ?? {},
     adsWf: data?.adsWf ?? {},
+    inlineAds: data?.inlineAds ?? {},
     screens: data?.screens ?? {},
     obsoleteNative: data?.obsoleteNative ?? {},
     reload,

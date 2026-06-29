@@ -1,18 +1,24 @@
-import { Router, type Request, type Response, type NextFunction } from 'express';
-import type { Version } from 'firebase-admin/remote-config';
-import { ACCESS_PASSWORD, requireAuth } from './auth';
-import { HttpError, rc } from './firebase';
+import {
+  Router,
+  type Request,
+  type Response,
+  type NextFunction,
+} from "express";
+import type { Version } from "firebase-admin/remote-config";
+import { ACCESS_PASSWORD, requireAuth } from "./auth";
+import { HttpError, rc } from "./firebase";
 import {
   applyChanges,
   applyDeletes,
   extractAdsWf,
+  extractInlineAds,
   extractObsoleteNative,
   extractParams,
   extractScreens,
   extractTriggers,
   validateChanges,
   type Changes,
-} from './template-utils';
+} from "./template-utils";
 
 const h =
   (fn: (req: Request, res: Response) => Promise<void>) =>
@@ -32,19 +38,22 @@ function versionInfo(version: Version | undefined) {
 function parseChanges(body: unknown): Changes {
   const changes = (body as { changes?: unknown })?.changes ?? {};
   if (
-    typeof changes !== 'object' ||
+    typeof changes !== "object" ||
     Array.isArray(changes) ||
-    Object.values(changes).some(v => typeof v !== 'string')
+    Object.values(changes).some((v) => typeof v !== "string")
   ) {
-    throw new HttpError(400, 'Body must be { changes: { [paramKey]: string } }');
+    throw new HttpError(
+      400,
+      "Body must be { changes: { [paramKey]: string } }",
+    );
   }
   return changes as Changes;
 }
 
 function parseDeletes(body: unknown): string[] {
   const deletes = (body as { deletes?: unknown })?.deletes ?? [];
-  if (!Array.isArray(deletes) || deletes.some(v => typeof v !== 'string')) {
-    throw new HttpError(400, 'deletes must be string[]');
+  if (!Array.isArray(deletes) || deletes.some((v) => typeof v !== "string")) {
+    throw new HttpError(400, "deletes must be string[]");
   }
   return deletes as string[];
 }
@@ -52,7 +61,7 @@ function parseDeletes(body: unknown): string[] {
 // At least one mutation (a changed value or a deletion) must be present.
 function ensureNonEmpty(changes: Changes, deletes: string[]): void {
   if (Object.keys(changes).length === 0 && deletes.length === 0) {
-    throw new HttpError(400, 'No changes provided');
+    throw new HttpError(400, "No changes provided");
   }
 }
 
@@ -60,20 +69,20 @@ export const routes = Router();
 
 // Public: exchange the shared password for access. The client stores the password
 // and replays it on every request, so this is just an up-front check + nicer error.
-routes.post('/login', (req, res) => {
+routes.post("/login", (req, res) => {
   const { password } = (req.body ?? {}) as { password?: unknown };
-  if (typeof password === 'string' && password === ACCESS_PASSWORD) {
+  if (typeof password === "string" && password === ACCESS_PASSWORD) {
     res.json({ ok: true });
     return;
   }
-  res.status(401).json({ error: 'wrong-password' });
+  res.status(401).json({ error: "wrong-password" });
 });
 
 // Everything below requires the shared password.
 routes.use(requireAuth);
 
 routes.get(
-  '/template',
+  "/template",
   h(async (_req, res) => {
     const template = await rc().getTemplate();
     res.json({
@@ -82,6 +91,7 @@ routes.get(
       params: extractParams(template),
       triggers: extractTriggers(template),
       adsWf: extractAdsWf(template),
+      inlineAds: extractInlineAds(template),
       screens: extractScreens(template),
       obsoleteNative: extractObsoleteNative(template),
     });
@@ -89,7 +99,7 @@ routes.get(
 );
 
 routes.post(
-  '/validate',
+  "/validate",
   h(async (req, res) => {
     const changes = parseChanges(req.body);
     const deletes = parseDeletes(req.body);
@@ -107,7 +117,12 @@ routes.post(
     } catch (e) {
       res.status(400).json({
         valid: false,
-        errors: [{ param: '*', message: `Firebase rejected the template: ${(e as Error).message}` }],
+        errors: [
+          {
+            param: "*",
+            message: `Firebase rejected the template: ${(e as Error).message}`,
+          },
+        ],
       });
       return;
     }
@@ -116,10 +131,11 @@ routes.post(
 );
 
 routes.post(
-  '/publish',
+  "/publish",
   h(async (req, res) => {
     const { etag } = req.body as { etag?: unknown };
-    if (typeof etag !== 'string' || !etag) throw new HttpError(400, 'Missing etag');
+    if (typeof etag !== "string" || !etag)
+      throw new HttpError(400, "Missing etag");
     const changes = parseChanges(req.body);
     const deletes = parseDeletes(req.body);
     ensureNonEmpty(changes, deletes);
@@ -130,7 +146,7 @@ routes.post(
     }
     const template = await rc().getTemplate();
     if (template.etag !== etag) {
-      res.status(409).json({ error: 'etag-conflict' });
+      res.status(409).json({ error: "etag-conflict" });
       return;
     }
     applyChanges(template, changes);
@@ -145,7 +161,7 @@ routes.post(
 );
 
 routes.get(
-  '/versions',
+  "/versions",
   h(async (_req, res) => {
     const result = await rc().listVersions({ pageSize: 10 });
     res.json({ versions: (result.versions ?? []).map(versionInfo) });
@@ -153,11 +169,11 @@ routes.get(
 );
 
 routes.post(
-  '/rollback',
+  "/rollback",
   h(async (req, res) => {
     const { versionNumber } = req.body as { versionNumber?: unknown };
-    if (typeof versionNumber !== 'string' || !versionNumber) {
-      throw new HttpError(400, 'Missing versionNumber');
+    if (typeof versionNumber !== "string" || !versionNumber) {
+      throw new HttpError(400, "Missing versionNumber");
     }
     const template = await rc().rollback(versionNumber);
     res.json({
