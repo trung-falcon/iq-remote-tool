@@ -210,7 +210,7 @@ const FULLSCREEN_BASE: NativeAdStyleRaw = {
   title_text_size: 18, // ad_headline 18sp
   title_max_lines: 2,
   body_text_size: 14, // ad_body 14sp
-  body_max_lines: 3,
+  body_max_lines: 2,
   icon_size: 64,
   icon_corner_radius: 14,
   media_height: 220,
