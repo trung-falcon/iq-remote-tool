@@ -12,6 +12,7 @@ import {
   applyDeletes,
   extractAdsWf,
   extractInlineAds,
+  extractNativeStyle,
   extractObsoleteNative,
   extractParams,
   extractScreens,
@@ -92,6 +93,7 @@ routes.get(
       triggers: extractTriggers(template),
       adsWf: extractAdsWf(template),
       inlineAds: extractInlineAds(template),
+      nativeStyle: extractNativeStyle(template),
       screens: extractScreens(template),
       obsoleteNative: extractObsoleteNative(template),
     });

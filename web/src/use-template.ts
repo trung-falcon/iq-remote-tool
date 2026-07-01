@@ -34,6 +34,7 @@ export function useTemplate() {
     triggers: data?.triggers ?? {},
     adsWf: data?.adsWf ?? {},
     inlineAds: data?.inlineAds ?? {},
+    nativeStyle: data?.nativeStyle ?? {},
     screens: data?.screens ?? {},
     obsoleteNative: data?.obsoleteNative ?? {},
     reload,

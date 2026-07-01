@@ -1,6 +1,7 @@
 import type { RemoteConfigTemplate } from "firebase-admin/remote-config";
 import { ADS_WF_KEYS } from "../../shared/ads-wf-meta";
 import { INLINE_AD_KEY_LIST } from "../../shared/inline-ad-meta";
+import { NATIVE_STYLE_KEY } from "../../shared/native-style-meta";
 import { ALL_PARAM_KEYS, stripPlatformPrefix } from "../../shared/params";
 import {
   LANGUAGE_SCREEN_KEY,
@@ -27,6 +28,7 @@ export function isManagedKey(key: string): boolean {
     (ALL_PARAM_KEYS as string[]).includes(baseKey) ||
     (ADS_WF_KEYS as readonly string[]).includes(baseKey) ||
     (INLINE_AD_KEY_LIST as readonly string[]).includes(baseKey) ||
+    baseKey === NATIVE_STYLE_KEY ||
     TRIGGER_KEY_RE.test(baseKey) ||
     ONBOARD_SCREEN_RE.test(baseKey) ||
     baseKey === LANGUAGE_SCREEN_KEY ||

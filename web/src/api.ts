@@ -22,6 +22,7 @@ export type TemplateResponse = {
   triggers: Record<string, ParamSummary>;
   adsWf: Record<string, ParamSummary>;
   inlineAds: Record<string, ParamSummary>;
+  nativeStyle: Record<string, ParamSummary>;
   screens: Record<string, ParamSummary>;
   obsoleteNative: Record<string, ParamSummary>;
 };

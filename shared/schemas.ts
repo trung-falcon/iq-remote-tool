@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { ADS_WF_KEYS } from "./ads-wf-meta";
 import { INLINE_AD_KEYS } from "./inline-ad-meta";
+import { NATIVE_STYLE_KEY } from "./native-style-meta";
 import { LANGUAGE_SCREEN_KEY, ONBOARD_SCREEN_RE } from "./screen-native-meta";
 import {
   NATIVE_CONTENT_TYPES,
@@ -401,6 +402,55 @@ export const languageScreenSchema = z
   })
   .passthrough();
 
+// Native ad style config (native_ads_style_config). Value shape:
+// { default?: NativeAdStyleRaw, layouts?: Record<layoutKey, NativeAdStyleRaw> }.
+// Lenient/passthrough per the app's defensive reads — the app clamps every numeric
+// field, so out-of-range numbers are a soft concern; we bound them to the same ranges
+// to catch obvious typos but keep unknown fields (passthrough). Colors are #AARRGGBB
+// strings (loosely checked); media_scale only validated when present.
+const styleColor = z.string().optional();
+const styleRawSchema = z
+  .object({
+    ad_container_background_color: styleColor,
+    ad_container_border_color: styleColor,
+    ad_container_has_shadow: z.boolean().optional(),
+    ad_title_color: styleColor,
+    ad_content_text_color: styleColor,
+    ad_text_color: styleColor,
+    ad_text_background_color: styleColor,
+    cta_background_color: styleColor,
+    cta_text_color: styleColor,
+    cta_has_shadow: z.boolean().optional(),
+    container_corner_radius: z.number().min(0).max(28).optional(),
+    container_border_width: z.number().min(0).max(4).optional(),
+    padding: z.number().min(0).max(28).optional(),
+    badge_text_size: z.number().min(1).max(40).optional(),
+    badge_corner_radius: z.number().min(0).max(16).optional(),
+    title_text_size: z.number().min(1).max(40).optional(),
+    title_max_lines: z.number().min(1).max(4).optional(),
+    body_text_size: z.number().min(1).max(40).optional(),
+    body_max_lines: z.number().min(1).max(5).optional(),
+    icon_size: z.number().min(24).max(120).optional(),
+    icon_corner_radius: z.number().min(0).max(60).optional(),
+    media_height: z.number().min(0).max(600).optional(),
+    media_square_size: z.number().min(24).max(320).optional(),
+    cta_height: z.number().min(24).max(160).optional(),
+    cta_text_size: z.number().min(1).max(40).optional(),
+    cta_corner_radius: z.number().min(0).max(40).optional(),
+    cta_side_width: z.number().min(56).max(220).optional(),
+    vertical_space: z.number().min(0).max(24).optional(),
+    horizontal_space: z.number().min(0).max(24).optional(),
+    media_scale: z.enum(["fit_center", "center_crop"]).optional(),
+  })
+  .passthrough();
+
+export const nativeStyleConfigSchema = z
+  .object({
+    default: styleRawSchema.optional(),
+    layouts: z.record(z.string(), styleRawSchema).optional(),
+  })
+  .passthrough();
+
 // Concise human-readable rendering of a parse/validation failure.
 export function describeError(e: unknown): string {
   if (e instanceof z.ZodError) {
@@ -426,6 +476,8 @@ export function validateRawValue(key: string, raw: string): string | null {
     }
     const parsed = JSON.parse(raw);
     if (baseKey === PARAM_KEYS.closeConfig) closeConfigSchema.parse(parsed);
+    else if (baseKey === NATIVE_STYLE_KEY)
+      nativeStyleConfigSchema.parse(parsed);
     else if (baseKey === PARAM_KEYS.layoutWeights)
       layoutWeightsSchema.parse(parsed);
     else if ((ADS_WF_KEYS as readonly string[]).includes(baseKey))

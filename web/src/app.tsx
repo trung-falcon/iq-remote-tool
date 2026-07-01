@@ -1,4 +1,5 @@
 import {
+  BgColorsOutlined,
   ControlOutlined,
   HistoryOutlined,
   LogoutOutlined,
@@ -25,17 +26,25 @@ import { VersionDrawer } from "./components/version-drawer";
 import { AdsWfPage } from "./pages/ads-wf-page";
 import { InlineAdPage } from "./pages/inline-ad-page";
 import { NativeFullscreenPage } from "./pages/native-fullscreen-page";
+import { NativeStylePage } from "./pages/native-style-page";
 import { ScreenNativePage } from "./pages/screen-native-page";
 import { TriggersPage } from "./pages/triggers-page";
 import { useTemplate } from "./use-template";
 
-type Section = "native" | "inline" | "screens" | "triggers" | "ads-wf";
+type Section =
+  | "native"
+  | "inline"
+  | "native-style"
+  | "screens"
+  | "triggers"
+  | "ads-wf";
 
 const NAV = [
   { key: "ads-wf", icon: <PartitionOutlined />, label: "Ads Waterfall" },
   { key: "triggers", icon: <ThunderboltOutlined />, label: "Ad Triggers" },
   { key: "native", icon: <PictureOutlined />, label: "Native Fullscreen Ad" },
   { key: "inline", icon: <BorderOutlined />, label: "Inline Ad" },
+  { key: "native-style", icon: <BgColorsOutlined />, label: "Native Style" },
   { key: "screens", icon: <ProfileOutlined />, label: "Native theo màn" },
 ];
 
@@ -179,6 +188,17 @@ export default function RemoteConfigApp() {
               <div style={{ display: section === "inline" ? "block" : "none" }}>
                 <InlineAdPage
                   inlineAds={t.inlineAds}
+                  etag={t.etag}
+                  reload={t.reload}
+                />
+              </div>
+              <div
+                style={{
+                  display: section === "native-style" ? "block" : "none",
+                }}
+              >
+                <NativeStylePage
+                  nativeStyle={t.nativeStyle}
                   etag={t.etag}
                   reload={t.reload}
                 />

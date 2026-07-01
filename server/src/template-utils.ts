@@ -5,6 +5,7 @@ import type {
 } from "firebase-admin/remote-config";
 import { ADS_WF_KEYS } from "../../shared/ads-wf-meta";
 import { INLINE_AD_KEY_LIST } from "../../shared/inline-ad-meta";
+import { NATIVE_STYLE_KEY } from "../../shared/native-style-meta";
 import {
   ALL_PARAM_KEYS,
   PARAM_KEYS,
@@ -125,6 +126,14 @@ export function extractObsoleteNative(
   for (const key of discoverObsoleteNativeKeys(template))
     out[key] = summarize(template, key);
   return out;
+}
+
+// Summarize the single native ad style config key (always present in the response
+// so the editor can start from the app default when it's absent from Firebase).
+export function extractNativeStyle(
+  template: RemoteConfigTemplate,
+): Record<string, ParamSummary> {
+  return { [NATIVE_STYLE_KEY]: summarize(template, NATIVE_STYLE_KEY) };
 }
 
 // Summarize the two InlineAd configs (footer + home banner).
