@@ -16,6 +16,7 @@ import { NativeAdEditor } from "../editors/native-ad/native-ad-editor";
 import { InlineNativeExtras } from "../editors/native-ad/inline-native-extras";
 import { JsonPreview } from "../components/json-preview";
 import { PublishBar } from "../components/publish-bar";
+import { ScrollPane } from "../components/scroll-pane";
 import { useInlineAdDrafts } from "../hooks/use-inline-ad-drafts";
 import { usePublishFlow } from "../hooks/use-publish-flow";
 import {
@@ -69,6 +70,7 @@ export function InlineAdPage({ inlineAds, etag, reload }: Props) {
 
       <Row gutter={16}>
         <Col xs={24} lg={6}>
+          <ScrollPane>
           <Card
             size="small"
             title="InlineAd targets"
@@ -125,6 +127,7 @@ export function InlineAdPage({ inlineAds, etag, reload }: Props) {
               }}
             />
           </Card>
+          </ScrollPane>
         </Col>
 
         <Col xs={24} lg={18}>
@@ -183,6 +186,7 @@ export function InlineAdPage({ inlineAds, etag, reload }: Props) {
 
               <Row gutter={16}>
                 <Col xs={24} xl={14}>
+                  <ScrollPane>
                   <Card size="small" title="InlineAd config">
                     <Space
                       direction="vertical"
@@ -246,8 +250,10 @@ export function InlineAdPage({ inlineAds, etag, reload }: Props) {
                       )}
                     </Space>
                   </Card>
+                  </ScrollPane>
                 </Col>
                 <Col xs={24} xl={10}>
+                  <ScrollPane>
                   <Typography.Title
                     level={5}
                     style={{
@@ -265,6 +271,7 @@ export function InlineAdPage({ inlineAds, etag, reload }: Props) {
                     value={JSON.parse(d.currentString(sel))}
                     dirty={d.isDirty(sel)}
                   />
+                  </ScrollPane>
                 </Col>
               </Row>
             </div>

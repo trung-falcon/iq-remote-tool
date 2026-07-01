@@ -5,6 +5,7 @@ import { onboardIdFromKey, SCREEN_CATALOG, screenKindOf } from '../../../shared/
 import type { ParamSummary } from '../api';
 import { JsonPreview } from '../components/json-preview';
 import { PublishBar } from '../components/publish-bar';
+import { ScrollPane } from '../components/scroll-pane';
 import { ScreenNativeEditor } from '../editors/screen-native/screen-native-editor';
 import { useScreenNativeDrafts } from '../hooks/use-screen-native-drafts';
 import { usePublishFlow } from '../hooks/use-publish-flow';
@@ -56,6 +57,7 @@ export function ScreenNativePage({ screens, obsoleteNative, etag, reload }: Prop
   return (
     <Row gutter={16}>
       <Col xs={24} lg={6}>
+        <ScrollPane>
         <Card size="small" title="Màn hình" styles={{ body: { padding: 6 } }}>
           <List
             size="small"
@@ -105,6 +107,7 @@ export function ScreenNativePage({ screens, obsoleteNative, etag, reload }: Prop
             </Card>
           )}
         </Card>
+        </ScrollPane>
       </Col>
 
       <Col xs={24} lg={18}>
@@ -151,14 +154,18 @@ export function ScreenNativePage({ screens, obsoleteNative, etag, reload }: Prop
                 )}
                 <Row gutter={16}>
                   <Col xs={24} xl={14}>
-                    <ScreenNativeEditor kind={selKind} value={nd.draft} onChange={nd.update} />
+                    <ScrollPane>
+                      <ScreenNativeEditor kind={selKind} value={nd.draft} onChange={nd.update} />
+                    </ScrollPane>
                   </Col>
                   <Col xs={24} xl={10}>
-                    <Typography.Title level={5} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <CodeOutlined style={{ color: '#3b82f6' }} />
-                      JSON (sẽ publish)
-                    </Typography.Title>
-                    <JsonPreview title={sel} value={JSON.parse(nd.currentString(sel))} dirty={nd.isDirty(sel)} />
+                    <ScrollPane>
+                      <Typography.Title level={5} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <CodeOutlined style={{ color: '#3b82f6' }} />
+                        JSON (sẽ publish)
+                      </Typography.Title>
+                      <JsonPreview title={sel} value={JSON.parse(nd.currentString(sel))} dirty={nd.isDirty(sel)} />
+                    </ScrollPane>
                   </Col>
                 </Row>
               </>

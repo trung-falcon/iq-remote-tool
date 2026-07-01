@@ -5,6 +5,7 @@ import type { ParamSummary } from '../api';
 import { JsonPreview } from '../components/json-preview';
 import { ParamTags } from '../components/param-tags';
 import { PublishBar } from '../components/publish-bar';
+import { ScrollPane } from '../components/scroll-pane';
 import { AdaptiveCooldownEditor } from '../editors/ads-wf/adaptive-cooldown-editor';
 import { AdsConfigFields } from '../editors/ads-wf/ads-config-fields';
 import { AdsItemList } from '../editors/ads-wf/ads-item-list';
@@ -50,19 +51,23 @@ export function AdsWfPage({ adsWf, etag, reload }: Props) {
 
       <Row gutter={16}>
         <Col xs={24} xl={15}>
-          <AdsConfigFields value={a.draft} onChange={a.update} />
-          <AdaptiveCooldownEditor value={a.draft} onChange={a.update} />
-          <AdsItemList value={a.draft} onChange={a.update} />
+          <ScrollPane>
+            <AdsConfigFields value={a.draft} onChange={a.update} />
+            <AdaptiveCooldownEditor value={a.draft} onChange={a.update} />
+            <AdsItemList value={a.draft} onChange={a.update} />
+          </ScrollPane>
         </Col>
         <Col xs={24} xl={9}>
-          <Typography.Title
-            level={5}
-            style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}
-          >
-            <CodeOutlined style={{ color: '#3b82f6' }} />
-            JSON (sẽ publish)
-          </Typography.Title>
-          <JsonPreview title={a.selected} value={a.currentObject()} dirty={a.isDirty(a.selected)} />
+          <ScrollPane>
+            <Typography.Title
+              level={5}
+              style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <CodeOutlined style={{ color: '#3b82f6' }} />
+              JSON (sẽ publish)
+            </Typography.Title>
+            <JsonPreview title={a.selected} value={a.currentObject()} dirty={a.isDirty(a.selected)} />
+          </ScrollPane>
         </Col>
       </Row>
     </div>

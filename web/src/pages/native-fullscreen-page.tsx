@@ -4,6 +4,7 @@ import { PARAM_KEYS } from '../../../shared/params';
 import type { ParamSummary } from '../api';
 import { JsonPreview } from '../components/json-preview';
 import { PublishBar } from '../components/publish-bar';
+import { ScrollPane } from '../components/scroll-pane';
 import { CloseConfigEditor } from '../editors/close-config-editor';
 import { LayoutWeightsEditor } from '../editors/layout-weights-editor';
 import { TimeoutEditor } from '../editors/timeout-editor';
@@ -43,6 +44,7 @@ export function NativeFullscreenPage({ params, etag, reload }: Props) {
 
       <Row gutter={16}>
         <Col xs={24} lg={14}>
+          <ScrollPane>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <Space wrap style={{ marginBottom: 8 }}>
@@ -110,8 +112,10 @@ export function NativeFullscreenPage({ params, etag, reload }: Props) {
               />
             </div>
           </div>
+          </ScrollPane>
         </Col>
         <Col xs={24} lg={10}>
+          <ScrollPane>
           <Typography.Title level={5} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
             <CodeOutlined style={{ color: '#3b82f6' }} />
             JSON preview
@@ -122,6 +126,7 @@ export function NativeFullscreenPage({ params, etag, reload }: Props) {
           <JsonPreview title={n.timeout.selected} value={n.timeout.draft} dirty={n.timeout.isDirty(n.timeout.selected)} />
           <JsonPreview title={n.closeConfig.selected} value={n.closeConfig.draft} dirty={n.closeConfig.isDirty(n.closeConfig.selected)} />
           <JsonPreview title={n.layoutWeights.selected} value={n.layoutWeights.draft} dirty={n.layoutWeights.isDirty(n.layoutWeights.selected)} />
+          </ScrollPane>
         </Col>
       </Row>
     </div>

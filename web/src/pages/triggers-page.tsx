@@ -5,6 +5,7 @@ import { eventFromKey, TRIGGER_EVENTS, triggerKeyFor } from '../../../shared/tri
 import type { ParamSummary } from '../api';
 import { JsonPreview } from '../components/json-preview';
 import { PublishBar } from '../components/publish-bar';
+import { ScrollPane } from '../components/scroll-pane';
 import { TriggerEditor } from '../editors/trigger/trigger-editor';
 import { computeFacets, TriggerFilterBar } from '../editors/trigger/trigger-filter-bar';
 import { parseTrigger } from '../hooks/trigger-serialize';
@@ -85,6 +86,7 @@ export function TriggersPage({ triggers, adsWf, etag, reload }: Props) {
   return (
     <Row gutter={16}>
       <Col xs={24} lg={7}>
+        <ScrollPane>
         <Card
           size="small"
           title={`Triggers (${shown.length === tg.keys.length ? tg.keys.length : `${shown.length}/${tg.keys.length}`})`}
@@ -134,6 +136,7 @@ export function TriggersPage({ triggers, adsWf, etag, reload }: Props) {
             )}
           />
         </Card>
+        </ScrollPane>
       </Col>
 
       <Col xs={24} lg={17}>
@@ -180,14 +183,18 @@ export function TriggersPage({ triggers, adsWf, etag, reload }: Props) {
                 )}
                 <Row gutter={16}>
                   <Col xs={24} xl={15}>
-                    <TriggerEditor value={tg.draft} onChange={tg.updateDraft} adGroupOptions={adGroupOptions} />
+                    <ScrollPane>
+                      <TriggerEditor value={tg.draft} onChange={tg.updateDraft} adGroupOptions={adGroupOptions} />
+                    </ScrollPane>
                   </Col>
                   <Col xs={24} xl={9}>
-                    <Typography.Title level={5} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <CodeOutlined style={{ color: '#3b82f6' }} />
-                      JSON (sẽ publish)
-                    </Typography.Title>
-                    <JsonPreview title={sel} value={JSON.parse(tg.currentString(sel))} dirty={tg.isDirty(sel)} />
+                    <ScrollPane>
+                      <Typography.Title level={5} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <CodeOutlined style={{ color: '#3b82f6' }} />
+                        JSON (sẽ publish)
+                      </Typography.Title>
+                      <JsonPreview title={sel} value={JSON.parse(tg.currentString(sel))} dirty={tg.isDirty(sel)} />
+                    </ScrollPane>
                   </Col>
                 </Row>
               </>

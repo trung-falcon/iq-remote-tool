@@ -20,6 +20,7 @@ import {
 import type { ParamSummary } from "../api";
 import { JsonPreview } from "../components/json-preview";
 import { PublishBar } from "../components/publish-bar";
+import { ScrollPane } from "../components/scroll-pane";
 import { NativeStyleEditor } from "../editors/native-style/native-style-editor";
 import { NativeStylePreview } from "../editors/native-style/native-style-preview";
 import {
@@ -107,6 +108,7 @@ export function NativeStylePage({ nativeStyle, etag, reload }: Props) {
       )}
 
       <Row gutter={16}>
+        {/* Left: the style editor — scrolls on its own so it never moves the preview/JSON. */}
         <Col xs={24} xl={13}>
           <Card
             size="small"
@@ -122,28 +124,44 @@ export function NativeStylePage({ nativeStyle, etag, reload }: Props) {
                 />
               </Space>
             }
+            styles={{ body: { padding: 0 } }}
           >
-            <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginTop: 0 }}>
-              {d.scope === "default"
-                ? "Áp cho MỌI layout (nền dưới cùng). Từng layout có thể ghi đè tiếp."
-                : layoutDesc(d.scope)}
-            </Typography.Paragraph>
-            {isFullscreenLayout(d.scope) && (
-              <Alert
-                type="warning"
-                showIcon
-                style={{ marginBottom: 12 }}
-                message="Layout fullscreen: default thật nằm trong Android XML nên preview chỉ gần đúng. Field bạn bật sẽ được publish làm override."
-              />
-            )}
-            <NativeStyleEditor d={d} />
+            <div style={{ padding: "12px 12px 0" }}>
+              <Typography.Paragraph type="secondary" style={{ fontSize: 12, marginTop: 0 }}>
+                {d.scope === "default"
+                  ? "Áp cho MỌI layout (nền dưới cùng). Từng layout có thể ghi đè tiếp."
+                  : layoutDesc(d.scope)}
+              </Typography.Paragraph>
+              {isFullscreenLayout(d.scope) && (
+                <Alert
+                  type="warning"
+                  showIcon
+                  style={{ marginBottom: 12 }}
+                  message="Layout fullscreen: default thật nằm trong Android XML nên preview chỉ gần đúng. Field bạn bật sẽ được publish làm override."
+                />
+              )}
+            </div>
+            <ScrollPane top={200} style={{ padding: "0 12px 12px" }}>
+              <NativeStyleEditor d={d} />
+            </ScrollPane>
           </Card>
         </Col>
 
+        {/* Right: preview stays put; only the JSON scrolls under it. */}
         <Col xs={24} xl={11}>
-          <Space direction="vertical" size={12} style={{ width: "100%" }}>
+          <div
+            style={{
+              position: "sticky",
+              top: 76,
+              maxHeight: "calc(100dvh - 96px)",
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
             <Card
               size="small"
+              style={{ flexShrink: 0 }}
               title={
                 <Space wrap>
                   <span>Preview</span>
@@ -169,7 +187,7 @@ export function NativeStylePage({ nativeStyle, etag, reload }: Props) {
               <NativeStylePreview layoutKey={previewLayout} config={d.config} />
             </Card>
 
-            <div>
+            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflowY: "auto" }}>
               <Typography.Title
                 level={5}
                 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 8 }}
@@ -179,7 +197,7 @@ export function NativeStylePage({ nativeStyle, etag, reload }: Props) {
               </Typography.Title>
               <JsonPreview title={d.key} value={JSON.parse(d.currentString)} dirty={d.dirty} />
             </div>
-          </Space>
+          </div>
         </Col>
       </Row>
     </div>
